@@ -69,6 +69,32 @@ _BROWSER_SUB_TOOLS = {
 }
 
 
+def _network_tool_confirm_callback(app_config: Any = None):
+    """Confirmation callback for network/channel-triggered agents.
+
+    Inbound channels (SMS / iMessage / SendBlue) and managed-agent message
+    streams run unattended — there is no human at a prompt. By default we
+    return ``None`` so that ``ToolExecutor`` *denies* tools marked
+    ``requires_confirmation=True`` (currently ``shell_exec``, ``git_commit``,
+    ``agent_kill``) instead of silently auto-approving them. This prevents a
+    text message or remote request from triggering shell/commit/kill actions
+    with no oversight.
+
+    Set ``[security] network_tool_auto_approve = true`` to restore the previous
+    behavior of auto-approving these tools on network paths.
+    """
+    try:
+        if app_config is None:
+            from openjarvis.core.config import load_config
+
+            app_config = load_config()
+        if getattr(app_config.security, "network_tool_auto_approve", False):
+            return lambda _prompt: True
+    except Exception:
+        logger.debug("network auto-approve flag lookup failed", exc_info=True)
+    return None
+
+
 def _resolve_memory_backend(config: Any) -> Any:
     """Instantiate the configured memory backend, or None if unavailable.
 
@@ -924,7 +950,7 @@ async def _stream_managed_agent(
                     max_turns=int(config.get("max_turns", 8)),
                     temperature=float(config.get("temperature", 0.3)),
                     interactive=True,
-                    confirm_callback=lambda _prompt: True,
+                    confirm_callback=_network_tool_confirm_callback(app_config),
                 )
 
                 # Wrap the executor to capture tool calls
@@ -1412,7 +1438,9 @@ async def _stream_managed_agent(
                                     tools=[tool_instance],
                                     bus=bus,
                                     interactive=True,
-                                    confirm_callback=lambda _prompt: True,
+                                    confirm_callback=_network_tool_confirm_callback(
+                                        app_config
+                                    ),
                                 )
                                 result = executor.execute(
                                     StubToolCall(
@@ -1767,7 +1795,7 @@ def create_agent_manager_router(
                                     model=getattr(engine, "_model", ""),
                                     tools=tools,
                                     interactive=True,
-                                    confirm_callback=lambda _prompt: True,
+                                    confirm_callback=_network_tool_confirm_callback(),
                                 )
 
                                 def handler(text: str) -> str:
@@ -1844,7 +1872,7 @@ def create_agent_manager_router(
                                     model=model_name,
                                     tools=tools,
                                     interactive=True,
-                                    confirm_callback=lambda _prompt: True,
+                                    confirm_callback=_network_tool_confirm_callback(),
                                 )
                         bus = getattr(request.app.state, "bus", None)
                         if bus is None:

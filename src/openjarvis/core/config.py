@@ -1243,6 +1243,11 @@ class SecurityConfig:
     rate_limit_burst: int = 10
     local_engine_bypass: bool = False
     local_tool_bypass: bool = False
+    # When False (default), tools that require confirmation (shell_exec,
+    # git_commit, agent_kill) are DENIED on unattended network/channel paths
+    # (inbound SMS/iMessage/SendBlue, managed-agent message streams) instead of
+    # being silently auto-approved. Set True to restore auto-approval there.
+    network_tool_auto_approve: bool = False
     profile: str = ""
     vault_key_path: str = str(DEFAULT_CONFIG_DIR / ".vault_key")
     capabilities: CapabilitiesConfig = field(default_factory=CapabilitiesConfig)
@@ -2077,6 +2082,9 @@ secret_scanner = true
 pii_scanner = true
 enforce_tool_confirmation = true
 ssrf_protection = true
+# Deny confirmation-required tools (shell_exec, git_commit, agent_kill) on
+# unattended network/channel paths. Set true to auto-approve them there.
+network_tool_auto_approve = false
 # rate_limit_enabled = false
 # rate_limit_rpm = 60
 # rate_limit_burst = 10
