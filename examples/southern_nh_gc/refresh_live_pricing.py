@@ -108,12 +108,14 @@ def main(fetch_web: bool, show: bool) -> None:
     summary = pricing_summary(overrides)
     click.echo(
         f"Live pricing (+{summary['premium_percent']:.0f}% premium on all customer items)\n"
-        f"  Deck:    ${summary['deck_floor_sqft']:.2f} floor → "
-        f"${summary['deck_customer_sqft']:.2f} quote /sqft\n"
-        f"  Garage:  ${summary['garage_floor_sqft']:.2f} floor → "
-        f"${summary['garage_customer_sqft']:.2f} quote /sqft\n"
-        f"  Addition:${summary['addition_floor_sqft']:.2f} floor → "
-        f"${summary['addition_customer_sqft']:.2f} quote /sqft"
+        f"  Deck:     ${summary['deck_floor_sqft']:.2f} floor → "
+        f"${summary['deck_customer_sqft']:.2f} quote /sqft (144 sqft benchmark)\n"
+        f"  Garage:   ${summary['garage_floor_sqft']:.2f} floor → "
+        f"${summary['garage_customer_sqft']:.2f} quote /sqft "
+        f"(mat ${summary['garage_material_sqft']:.2f} + labor ${summary['garage_labor_sqft']:.2f} + subs)\n"
+        f"  Addition: ${summary['addition_floor_sqft']:.2f} floor → "
+        f"${summary['addition_customer_sqft']:.2f} quote /sqft "
+        f"(mat ${summary['addition_material_sqft']:.2f} + labor ${summary['addition_labor_sqft']:.2f} + subs)"
     )
 
     if show:

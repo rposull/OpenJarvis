@@ -1,14 +1,12 @@
 {
-  "updated_at": "2026-06-30T23:19:25.635072+00:00",
+  "updated_at": "2026-06-30T23:21:46.013746+00:00",
   "quote_premium_percent": 10.0,
   "sources": [
     "144 sqft deck benchmark",
-    "southern NH GC trade_catalog"
+    "component_pricing (garage/addition sum framing, roof, siding, windows, subs)"
   ],
   "overrides": {
     "deck_floor_sqft": 100.69,
-    "garage_floor_sqft": 100.69,
-    "addition_floor_sqft": 105.72,
     "material_sqft": 48.61,
     "labor_sqft": 52.08,
     "composite decking": {

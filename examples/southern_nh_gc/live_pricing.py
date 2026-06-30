@@ -20,6 +20,12 @@ from shop_pricing import (
     customer_multiplier,
 )
 
+from component_pricing import (
+    deck_floor_from_benchmark,
+    mat_labor_split,
+    sum_components_floor,
+)
+
 _LIVE_PRICES_PATH = Path(__file__).resolve().parent / "live_prices.json"
 
 
@@ -79,29 +85,52 @@ def _override_floor(overrides: dict[str, Any], key: str, default: float) -> floa
 
 
 def trade_floor_sqft(trade: str, overrides: dict[str, Any] | None = None) -> float:
-    """All-in floor $/sqft for deck, garage, addition, porch."""
+    """All-in floor $/sqft — deck from benchmark; garage/addition from components."""
     ov = overrides or {}
-    mult = {
-        "deck": 1.0,
-        "garage": 1.0,
-        "addition": 1.05,
-        "covered porch": 0.95,
-    }.get(trade, 1.0)
-    default = round(FLOOR_PRICE_PER_SQFT * mult, 2)
-    return _override_floor(ov, f"{trade}_floor_sqft", default)
+
+    # Explicit override wins
+    raw = ov.get(f"{trade}_floor_sqft")
+    if isinstance(raw, (int, float)):
+        return float(raw)
+
+    if trade == "deck":
+        return deck_floor_from_benchmark(ov)
+
+    if trade in ("garage", "addition", "covered porch"):
+        total, _ = sum_components_floor(trade, ov)
+        return total
+
+    return FLOOR_PRICE_PER_SQFT
+
+
+def trade_component_breakdown(
+    trade: str,
+    overrides: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Per-line floor $/sqft for garage/addition/deck (internal use)."""
+    _, rows = sum_components_floor(trade, overrides)
+    return rows
 
 
 def pricing_summary(overrides: dict[str, Any] | None = None) -> dict[str, float]:
     """Current all-in rates after overrides and premium."""
     ov = overrides or {}
     deck_floor = trade_floor_sqft("deck", ov)
+    garage_floor = trade_floor_sqft("garage", ov)
+    addition_floor = trade_floor_sqft("addition", ov)
+    garage_mat, garage_lab = mat_labor_split("garage", ov)
+    add_mat, add_lab = mat_labor_split("addition", ov)
     return {
         "deck_floor_sqft": deck_floor,
         "deck_customer_sqft": customer_price(deck_floor),
-        "garage_floor_sqft": trade_floor_sqft("garage", ov),
-        "garage_customer_sqft": customer_price(trade_floor_sqft("garage", ov)),
-        "addition_floor_sqft": trade_floor_sqft("addition", ov),
-        "addition_customer_sqft": customer_price(trade_floor_sqft("addition", ov)),
+        "garage_floor_sqft": garage_floor,
+        "garage_customer_sqft": customer_price(garage_floor),
+        "garage_material_sqft": garage_mat,
+        "garage_labor_sqft": garage_lab,
+        "addition_floor_sqft": addition_floor,
+        "addition_customer_sqft": customer_price(addition_floor),
+        "addition_material_sqft": add_mat,
+        "addition_labor_sqft": add_lab,
         "premium_percent": QUOTE_PREMIUM_PERCENT,
         "material_floor_sqft": _override_floor(ov, "material_sqft", MATERIAL_PER_SQFT),
         "labor_floor_sqft": _override_floor(ov, "labor_sqft", LABOR_PER_SQFT),

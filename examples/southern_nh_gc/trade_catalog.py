@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from live_pricing import customer_price, load_live_overrides, trade_floor_sqft
+from component_pricing import mat_labor_split
+from live_pricing import customer_price, trade_floor_sqft
 from shop_pricing import LABOR_PER_SQFT, MATERIAL_PER_SQFT
 
 # (name, category, unit, floor_unit_cost)
@@ -64,15 +65,22 @@ SUBCONTRACT_TRADES: list[tuple[str, str, str, float]] = [
     ("garage door installed", "subcontract", "each", 1800.0),
 ]
 
-# Per-job labor packages (floor $/sqft reference — internal tracking)
-INTERNAL_LABOR_PACKAGES: list[tuple[str, str, str, float]] = [
-    ("_internal deck material", "material", "sqft", MATERIAL_PER_SQFT),
-    ("_internal deck labor", "labor", "sqft", LABOR_PER_SQFT),
-    ("_internal garage material", "material", "sqft", MATERIAL_PER_SQFT),
-    ("_internal garage labor", "labor", "sqft", LABOR_PER_SQFT),
-    ("_internal addition material", "material", "sqft", round(MATERIAL_PER_SQFT * 1.02, 2)),
-    ("_internal addition labor", "labor", "sqft", round(LABOR_PER_SQFT * 1.03, 2)),
-]
+# Internal mat/labor from component sums (garage/addition higher $/sqft than deck)
+def _internal_packages(overrides: dict[str, Any]) -> list[tuple[str, str, str, float]]:
+    deck_mat, deck_lab = mat_labor_split("deck", overrides)
+    gar_mat, gar_lab = mat_labor_split("garage", overrides)
+    add_mat, add_lab = mat_labor_split("addition", overrides)
+    return [
+        ("_internal deck material", "material", "sqft", deck_mat or MATERIAL_PER_SQFT),
+        ("_internal deck labor", "labor", "sqft", deck_lab or LABOR_PER_SQFT),
+        ("_internal garage material", "material", "sqft", gar_mat),
+        ("_internal garage labor", "labor", "sqft", gar_lab),
+        ("_internal addition material", "material", "sqft", add_mat),
+        ("_internal addition labor", "labor", "sqft", add_lab),
+    ]
+
+
+INTERNAL_LABOR_PACKAGES: list[tuple[str, str, str, float]] = []
 
 # Flat add-ons (floor)
 FLAT_ADDONS: list[tuple[str, str, str, float]] = [
@@ -130,8 +138,8 @@ def build_catalog_items(
             floor = _item_floor(name, floor_cost, ov)
             customer.append((name, category, unit, customer_price(floor)))
 
-    for name, category, unit, floor_cost in INTERNAL_LABOR_PACKAGES:
-        internal.append((name, category, unit, _item_floor(name, floor_cost, ov)))
+    for name, category, unit, floor_cost in _internal_packages(ov):
+        internal.append((name, category, unit, floor_cost))
 
     return customer, internal
 
