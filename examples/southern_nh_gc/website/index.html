@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Licensed general contractor in southern New Hampshire. Custom decks, garages, and home additions. Free estimates.">
+  <title>Southern NH Construction — Decks, Garages &amp; Additions</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo" id="logo-text">Southern NH <span>Construction</span></a>
+      <nav class="nav" id="main-nav">
+        <a href="#services">Services</a>
+        <a href="#process">Process</a>
+        <a href="#area">Service Area</a>
+        <a href="#contact" class="nav-cta">Free Estimate</a>
+      </nav>
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="hero-badge">Southern New Hampshire · Licensed GC</span>
+          <h1>Quality decks, garages &amp; additions — built to last</h1>
+          <p class="hero-lead" id="hero-tagline">
+            We specialize in residential construction across southern NH.
+            Clear quotes, detailed scope of work, and craftsmanship you can trust.
+          </p>
+          <div class="hero-actions">
+            <a href="#contact" class="btn btn-primary">Request a Free Estimate</a>
+            <a href="tel:+16035550123" class="btn btn-secondary" id="hero-phone">Call (603) 555-0123</a>
+          </div>
+        </div>
+        <div class="hero-card">
+          <h3>What we build</h3>
+          <ul>
+            <li>Custom decks — pressure-treated &amp; composite</li>
+            <li>Detached &amp; attached garages</li>
+            <li>Room additions &amp; bump-outs</li>
+            <li>Permits, inspections &amp; code-compliant work</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="services">
+      <div class="container">
+        <div class="section-title">
+          <h2>Our Services</h2>
+          <p>Focused on the projects homeowners need most — done right, start to finish.</p>
+        </div>
+        <div class="services-grid">
+          <article class="service-card">
+            <div class="service-icon">🏡</div>
+            <h3>Decks</h3>
+            <p>New decks, rebuilds, and upgrades. Footings, framing, decking, railing, and stairs — all permitted and inspected to NH code.</p>
+          </article>
+          <article class="service-card">
+            <div class="service-icon">🚗</div>
+            <h3>Garages</h3>
+            <p>Detached and attached garages with slab, framing, roof, siding, and openings. Sized for your vehicles and storage needs.</p>
+          </article>
+          <article class="service-card">
+            <div class="service-icon">➕</div>
+            <h3>Home Additions</h3>
+            <p>Single-story additions tied into your existing home. Foundation, envelope, and shell work with a clear scope before we start.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="process" style="background: #fff;">
+      <div class="container">
+        <div class="section-title">
+          <h2>How It Works</h2>
+          <p>Simple, transparent process from first call to final walkthrough.</p>
+        </div>
+        <div class="process-steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <h3>Consultation</h3>
+            <p>Tell us about your project — size, timeline, and goals. Site visit when needed.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <h3>Detailed Quote</h3>
+            <p>Written estimate with scope of work, timeline, and clear pricing — no surprises.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <h3>Permits &amp; Build</h3>
+            <p>We handle permits and inspections. Quality materials and skilled crew on site.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <h3>Walkthrough</h3>
+            <p>Final cleanup and walkthrough. Your project, done right.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="area">
+      <div class="container">
+        <div class="area-box">
+          <h2>Serving Southern New Hampshire</h2>
+          <p id="service-area-text">
+            Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelham, Windham, and surrounding towns.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="container contact-grid">
+        <div class="contact-info">
+          <h2>Get a Free Estimate</h2>
+          <p>Tell us about your deck, garage, or addition project. We respond within one business day.</p>
+          <div class="contact-detail">
+            <span>📞</span>
+            <span><strong>Phone:</strong> <a href="tel:+16035550123" id="contact-phone">(603) 555-0123</a></span>
+          </div>
+          <div class="contact-detail">
+            <span>✉️</span>
+            <span><strong>Email:</strong> <a href="mailto:hello@example.com" id="contact-email">hello@example.com</a></span>
+          </div>
+        </div>
+        <form id="quote-form">
+          <div class="form-row">
+            <label for="name">Name *</label>
+            <input type="text" id="name" name="name" required autocomplete="name">
+          </div>
+          <div class="form-row">
+            <label for="phone">Phone *</label>
+            <input type="tel" id="phone" name="phone" required autocomplete="tel">
+          </div>
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="email">
+          </div>
+          <div class="form-row">
+            <label for="town">Town</label>
+            <input type="text" id="town" name="town" placeholder="e.g. Nashua">
+          </div>
+          <div class="form-row">
+            <label for="project">Project type *</label>
+            <select id="project" name="project" required>
+              <option value="">Select…</option>
+              <option value="deck">Deck</option>
+              <option value="garage">Garage</option>
+              <option value="addition">Home addition</option>
+              <option value="other">Other / not sure</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="message">Project details *</label>
+            <textarea id="message" name="message" required placeholder="Approximate size, timeline, and what you're looking for…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">Send Request</button>
+          <p class="form-note">We never share your information. For urgent inquiries, call us directly.</p>
+          <div class="form-success" id="form-success">Thanks! We'll be in touch shortly.</div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span id="footer-copy">© 2026 Southern NH Construction. All rights reserved.</span>
+      <span>Decks · Garages · Additions · Southern NH</span>
+    </div>
+  </footer>
+
+  <script src="site-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
