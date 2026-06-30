@@ -1,0 +1,35 @@
+# Southern NH GC — decks, garages, additions
+# Copy to ~/.openjarvis/config.toml
+#
+# Quick start:
+#   jarvis init
+#   cp configs/openjarvis/examples/southern-nh-gc.toml ~/.openjarvis/config.toml
+#   ollama pull qwen3:8b
+#   uv run python examples/southern_nh_gc/lead_scan.py
+#
+# For quotes/contracts (cost catalog, HTML/PDF quotes), use branch
+# feat/personal-assistant-expansion or merge when available.
+
+[engine]
+default = "ollama"
+
+[intelligence]
+default_model = "qwen3:8b"
+preferred_engine = "ollama"
+temperature = 0.3
+max_tokens = 4096
+
+[agent]
+default_agent = "operative"
+max_turns = 25
+context_from_memory = true
+tools = "web_search,http_request,memory_store,memory_search,think"
+
+[tools.storage]
+default_backend = "sqlite"
+db_path = "~/.openjarvis/memory.db"
+
+# Optional: load the built-in operator recipe
+#   jarvis recipe run southern-nh-gc-leads
+#
+# Or schedule scripts from examples/southern_nh_gc/
