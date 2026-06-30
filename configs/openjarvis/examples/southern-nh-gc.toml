@@ -1,0 +1,39 @@
+# Southern NH GC — decks, garages, additions
+# Pricing: $100/sqft installed (material + labor)
+# Target: $500–$1,000 profit per crew-day on site
+#
+# Copy to ~/.openjarvis/config.toml
+#
+# Quick start:
+#   jarvis init
+#   cp configs/openjarvis/examples/southern-nh-gc.toml ~/.openjarvis/config.toml
+#   ollama pull qwen3:8b
+#   cp examples/southern_nh_gc/.env.example examples/southern_nh_gc/.env
+#   # edit .env — set NTFY_TOPIC for phone alerts (free ntfy app)
+#   uv run python examples/southern_nh_gc/seed_cost_catalog.py
+#   uv run python examples/southern_nh_gc/lead_scan.py
+
+[engine]
+default = "ollama"
+
+[intelligence]
+default_model = "qwen3:8b"
+preferred_engine = "ollama"
+temperature = 0.3
+max_tokens = 4096
+
+[agent]
+default_agent = "operative"
+max_turns = 30
+context_from_memory = true
+tools = "web_search,http_request,memory_store,memory_search,think,cost_lookup,project_create,project_update_status,quote_create,notify_push,notify_email"
+
+[tools.storage]
+default_backend = "sqlite"
+db_path = "~/.openjarvis/memory.db"
+
+# Optional PDF quotes: uv sync --extra construction
+#
+# Schedule:
+#   jarvis scheduler start
+#   jarvis scheduler create "GC leads" --type cron --value "0 11 * * 1-6"

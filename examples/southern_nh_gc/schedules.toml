@@ -1,0 +1,20 @@
+# Southern NH GC — example cron schedules
+# Times are UTC. Adjust for Eastern (e.g. 6 AM ET ≈ 11 UTC during EST).
+#
+# Register via CLI:
+#   jarvis scheduler start
+#   jarvis scheduler create "GC lead scan" --type cron --value "0 11 * * 1-6"
+
+[schedules]
+
+[schedules.lead_scan]
+type = "cron"
+value = "0 11 * * 1-6"
+description = "Morning lead scan (Mon–Sat) — decks, garages, additions"
+script = "lead_scan.py"
+
+[schedules.follow_up]
+type = "cron"
+value = "0 21 * * 1-5"
+description = "Afternoon follow-up check (Mon–Fri)"
+script = "follow_up.py"

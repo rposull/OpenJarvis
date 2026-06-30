@@ -1,0 +1,28 @@
+[recipe]
+name = "southern-nh-gc-leads"
+kind = "operator"
+description = "Daily lead scan for a southern NH GC — decks, garages, additions — with scored alerts and memory-backed deduplication"
+version = "0.1.0"
+
+[intelligence]
+model = "qwen3:8b"
+
+[engine]
+key = "ollama"
+
+[agent]
+type = "operative"
+max_turns = 25
+temperature = 0.3
+tools = ["web_search", "http_request", "memory_store", "memory_search", "think", "cost_lookup", "cost_add", "project_create", "project_update_status", "quote_create", "notify_push", "notify_email"]
+system_prompt_path = "southern_nh_gc_leads_prompt.md"
+
+[schedule]
+type = "cron"
+value = "0 11 * * 1-6"
+
+[channels]
+output = []
+
+[learning]
+routing = "heuristic"
