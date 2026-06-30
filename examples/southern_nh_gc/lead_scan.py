@@ -29,6 +29,12 @@ DEFAULT_TOWNS = (
 
 DEFAULT_JOB_TYPES = "decks, garages, home additions"
 
+# $100/sqft all-in; ~$42/sqft margin → 12–24 sqft/day ≈ $500–$1,000/day profit
+DEFAULT_PRICE_PER_SQFT = 100
+DEFAULT_MIN_JOB_SIZE = 10_000  # 100 sqft minimum at $100/sqft
+DEFAULT_TARGET_PROFIT_DAY = 750  # middle of $500–$1,000/day goal
+DEFAULT_MARKUP_RATE = 0.0  # catalog prices are already sell rates
+
 LEAD_TOOLS = [
     "web_search",
     "http_request",
@@ -59,17 +65,31 @@ LEAD_TOOLS = [
 )
 @click.option(
     "--min-job-size",
-    default=8000,
+    default=DEFAULT_MIN_JOB_SIZE,
     show_default=True,
     type=int,
-    help="Skip leads with estimated value below this (USD).",
+    help="Skip leads with estimated contract value below this (USD).",
+)
+@click.option(
+    "--price-per-sqft",
+    default=DEFAULT_PRICE_PER_SQFT,
+    show_default=True,
+    type=float,
+    help="Installed rate $/sqft (material + labor).",
+)
+@click.option(
+    "--target-profit-day",
+    default=DEFAULT_TARGET_PROFIT_DAY,
+    show_default=True,
+    type=int,
+    help="Prefer leads estimated to yield this $/crew-day profit (500–1000).",
 )
 @click.option(
     "--markup-rate",
-    default=18.0,
+    default=DEFAULT_MARKUP_RATE,
     show_default=True,
     type=float,
-    help="Markup %% applied when drafting ballpark quotes.",
+    help="Markup %% on quote line items (0 when catalog is already sell price).",
 )
 @click.option(
     "--notify",
@@ -99,6 +119,8 @@ def main(
     towns: str,
     job_types: str,
     min_job_size: int,
+    price_per_sqft: float,
+    target_profit_day: int,
     markup_rate: float,
     notify: str,
     model: str | None,
@@ -140,22 +162,32 @@ def main(
         ),
     }[notify]
 
+    margin_per_sqft = price_per_sqft - 58  # matches seed_cost_catalog internal load
+
     prompt = (
         f"Today is {today}. Run a full southern NH GC lead scan.\n\n"
         f"**Towns to prioritize**: {town_str}\n"
         f"**Job types**: {job_types}\n"
-        f"**Minimum job size**: ${min_job_size:,} estimated — skip smaller leads\n"
-        f"**Quote markup**: {markup_rate}% on subtotal when using quote_create\n\n"
+        f"**Pricing**: ${price_per_sqft:.0f}/sqft installed (material + labor)\n"
+        f"**Profit target**: ${target_profit_day}/crew-day on site "
+        f"(ideal range $500–$1,000/day)\n"
+        f"**Minimum job size**: ${min_job_size:,} contract value — skip smaller\n"
+        f"**Quote markup**: {markup_rate}% (catalog items are already sell price)\n\n"
         "Follow your system workflow: recall prior leads from memory, search "
         "homeowner and bid sources, score new opportunities, store each lead.\n\n"
         "**For every hot lead (score 7+)**:\n"
-        "1. Use cost_lookup for unit costs, then quote_create with realistic "
-        "quantities inferred from the post (deck sqft, garage size, addition "
-        "scope). Title: 'Ballpark — [job type] — [town]'.\n"
-        "2. project_create for the lead (status: lead), link the quote.\n"
-        "3. project_update_status to 'quoted' after the quote is saved.\n"
+        "1. Estimate footprint sqft from the post. Price main area with catalog "
+        "item `deck installed all-in`, `garage built all-in`, or "
+        "`addition shell all-in` at "
+        f"${price_per_sqft:.0f}/sqft. Add stairs, doors, permits as line items.\n"
+        "2. Estimate crew-days on site and compute profit/day: "
+        f"(sqft × ${margin_per_sqft:.0f} margin) ÷ days. Prefer jobs ≥ "
+        f"${target_profit_day}/day.\n"
+        "3. quote_create (markup_rate={markup_rate}), project_create, "
+        "project_update_status to quoted.\n"
         f"4. {notify_instructions}\n\n"
-        "Produce the standard lead report including quote file paths for hot leads."
+        "Produce the standard lead report with sqft, contract total, "
+        "estimated profit/day, and quote file paths."
     )
 
     tools = list(LEAD_TOOLS)
@@ -198,7 +230,8 @@ def main(
         f"  Southern NH GC Lead Scan — {today}\n"
         f"  Towns: {town_str}\n"
         f"  Focus: {job_types}\n"
-        f"  Min job size: ${min_job_size:,}\n"
+        f"  Rate: ${price_per_sqft:.0f}/sqft | Min job: ${min_job_size:,}\n"
+        f"  Profit target: ${target_profit_day}/day\n"
         f"{'=' * 60}\n"
     )
     click.echo(header)

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Seed a southern NH GC cost catalog for deck, garage, and addition quotes.
 
-Run once before lead scans (or after resetting ~/.openjarvis/construction.db)::
+Shop pricing (edit these constants to match your business)::
+
+    $100/sqft all-in (material + labor) for decks, garages, and additions
+    Target: $500–$1,000 profit per crew-day on site
+
+Run once before lead scans::
 
     uv run python examples/southern_nh_gc/seed_cost_catalog.py
-
-Adjust unit costs to match your shop rates. The lead scanner uses these via
-``cost_lookup`` when drafting ballpark quotes with ``quote_create``.
 """
 
 from __future__ import annotations
@@ -15,34 +17,34 @@ import click
 
 from openjarvis.construction.store import ConstructionStore
 
-# Ballpark southern NH rates — edit to match your pricing.
+# --- Your shop rates (customer-facing) ---------------------------------------
+PRICE_PER_SQFT = 100.0  # $/sqft installed, material + labor included
+# Internal loaded cost for margin math (~42% gross margin at $100 sell)
+INTERNAL_COST_PER_SQFT = 58.0
+MARGIN_PER_SQFT = PRICE_PER_SQFT - INTERNAL_COST_PER_SQFT
+
+# --- Catalog: sell-price packages + common add-ons ----------------------------
 DEFAULT_ITEMS: list[tuple[str, str, str, float]] = [
     # (name, category, unit, unit_cost)
-    # Labor
-    ("carpenter labor", "labor", "hour", 72.0),
-    ("lead carpenter labor", "labor", "hour", 85.0),
-    ("general labor", "labor", "hour", 55.0),
-    ("demo labor", "labor", "hour", 65.0),
-    ("concrete labor", "labor", "hour", 68.0),
-    # Decks
-    ("pressure treated decking", "material", "sqft", 3.25),
-    ("composite decking", "material", "sqft", 6.50),
-    ("deck railing linear", "material", "lf", 42.0),
-    ("deck footings", "material", "each", 85.0),
-    ("deck framing lumber package", "material", "sqft", 4.75),
-    ("deck stairs", "material", "each", 650.0),
-    # Garages
-    ("garage slab 4in", "material", "sqft", 9.50),
-    ("garage framing package", "material", "sqft", 14.0),
+    # Primary packages — already at your $100/sqft sell rate (use markup 0)
+    ("deck installed all-in", "labor", "sqft", PRICE_PER_SQFT),
+    ("garage built all-in", "labor", "sqft", PRICE_PER_SQFT),
+    ("addition shell all-in", "labor", "sqft", PRICE_PER_SQFT),
+    ("covered porch all-in", "labor", "sqft", PRICE_PER_SQFT),
+    # Deck add-ons (sell price, on top of base deck sqft when applicable)
+    ("deck stairs", "labor", "each", 1200.0),
+    ("composite upgrade", "material", "sqft", 15.0),
+    ("glass railing upgrade", "material", "lf", 95.0),
+    ("hot tub deck reinforcement", "labor", "each", 850.0),
+    # Garage add-ons
     ("garage door installed", "material", "each", 1800.0),
     ("garage electrical rough-in", "material", "each", 2200.0),
-    # Additions
-    ("addition framing", "material", "sqft", 18.0),
-    ("addition roof tie-in", "material", "sqft", 22.0),
-    ("insulation r21", "material", "sqft", 2.80),
+    ("garage slab 4in", "material", "sqft", 9.50),
+    # Addition finish add-ons
     ("drywall hung taped", "material", "sqft", 3.50),
     ("vinyl siding", "material", "sqft", 5.25),
-    # Shared
+    ("insulation r21", "material", "sqft", 2.80),
+    # Job overhead (flat per project)
     ("permit fee allowance", "other", "each", 450.0),
     ("dumpster 20yd", "equipment", "each", 550.0),
     ("site protection misc", "material", "each", 250.0),
@@ -58,7 +60,13 @@ def main() -> None:
         store.add_cost_item(name, unit_cost, category=category, unit=unit)
 
     items = store.search_cost_items()
+    daily_at_20_sqft = MARGIN_PER_SQFT * 20
     click.echo(f"Seeded {len(items)} cost catalog items.")
+    click.echo(
+        f"Pricing: ${PRICE_PER_SQFT:.0f}/sqft all-in | "
+        f"~${MARGIN_PER_SQFT:.0f}/sqft margin | "
+        f"~${daily_at_20_sqft:.0f}/day at 20 sqft/day on site"
+    )
 
 
 if __name__ == "__main__":
