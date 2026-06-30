@@ -5,10 +5,10 @@
 #   jarvis init
 #   cp configs/openjarvis/examples/southern-nh-gc.toml ~/.openjarvis/config.toml
 #   ollama pull qwen3:8b
+#   cp examples/southern_nh_gc/.env.example examples/southern_nh_gc/.env
+#   # edit .env — set NTFY_TOPIC for phone alerts (free ntfy app)
+#   uv run python examples/southern_nh_gc/seed_cost_catalog.py
 #   uv run python examples/southern_nh_gc/lead_scan.py
-#
-# For quotes/contracts (cost catalog, HTML/PDF quotes), use branch
-# feat/personal-assistant-expansion or merge when available.
 
 [engine]
 default = "ollama"
@@ -21,15 +21,16 @@ max_tokens = 4096
 
 [agent]
 default_agent = "operative"
-max_turns = 25
+max_turns = 30
 context_from_memory = true
-tools = "web_search,http_request,memory_store,memory_search,think"
+tools = "web_search,http_request,memory_store,memory_search,think,cost_lookup,project_create,project_update_status,quote_create,notify_push,notify_email"
 
 [tools.storage]
 default_backend = "sqlite"
 db_path = "~/.openjarvis/memory.db"
 
-# Optional: load the built-in operator recipe
-#   jarvis recipe run southern-nh-gc-leads
+# Optional PDF quotes: uv sync --extra construction
 #
-# Or schedule scripts from examples/southern_nh_gc/
+# Schedule:
+#   jarvis scheduler start
+#   jarvis scheduler create "GC leads" --type cron --value "0 11 * * 1-6"

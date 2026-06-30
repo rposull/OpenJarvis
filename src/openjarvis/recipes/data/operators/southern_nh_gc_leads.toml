@@ -14,7 +14,7 @@ key = "ollama"
 type = "operative"
 max_turns = 25
 temperature = 0.3
-tools = ["web_search", "http_request", "memory_store", "memory_search", "think"]
+tools = ["web_search", "http_request", "memory_store", "memory_search", "think", "cost_lookup", "cost_add", "project_create", "project_update_status", "quote_create", "notify_push", "notify_email"]
 system_prompt_path = "southern_nh_gc_leads_prompt.md"
 
 [schedule]

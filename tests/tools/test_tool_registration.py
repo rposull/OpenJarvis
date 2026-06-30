@@ -68,6 +68,19 @@ EXPECTED_TOOLS = {
     "kg_add_relation",
     "kg_query",
     "kg_neighbors",
+    # construction_tools.py
+    "cost_add",
+    "cost_lookup",
+    "project_create",
+    "project_list",
+    "project_update_status",
+    "quote_create",
+    "contract_create",
+    # notification_tools.py
+    "notify_email",
+    "notify_sms",
+    "notify_push",
+    "notify",
 }
 
 

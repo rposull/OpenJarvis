@@ -41,6 +41,7 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
    - **Urgency** (0–3): timeline, budget mentioned, seasonal pressure
 
    Only surface **7+** as "hot leads" in the alert section. Still log 4–6 in memory for tracking.
+   Skip leads with estimated job value below the user's minimum (default $8,000).
 
 5. **Store** — For every new lead, `memory_store` with:
 
@@ -49,7 +50,17 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
    - score, status (`new` | `contacted` | `quoted` | `won` | `lost` | `stale`)
    - date first seen
 
-6. **Output format**
+6. **Ballpark quotes (hot leads only)** — For each hot lead:
+
+   - `cost_lookup` to pull unit costs from the catalog (run `seed_cost_catalog.py` first)
+   - Infer reasonable quantities from the post (e.g. 12×16 deck ≈ 192 sqft decking + railing + footings + labor)
+   - `quote_create` with title `Ballpark — [job type] — [town]`, client name if known, `markup_rate` from config (default 18%), `tax_rate` 0 unless NH meals/lodging irrelevant
+   - `project_create` (status `lead`) then link quote; update to `quoted` when saved
+   - Include the quote HTML path in the report
+
+7. **Alerts** — For hot leads, send `notify_push` (or `notify_email` if configured) with town, job type, score, and ballpark total. Keep messages under 400 characters for push.
+
+8. **Output format**
 
 ```
 # Southern NH GC Lead Report — [date]
@@ -60,6 +71,7 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
 - **Summary**: [2–3 sentences]
 - **Contact**: [phone/email/DM if visible, else "reply via platform"]
 - **Suggested action**: [call within 2h | site visit this week | send ballpark quote | pass]
+- **Ballpark quote**: [total $X — path to HTML/PDF]
 - **Notes**: [permits, competitors, red flags]
 
 ## Warm leads (score 4–6)
