@@ -65,9 +65,14 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
    - Trades: deck, garage, addition, porch all-in packages + carpenter/concrete/roofing labor + subs
 
    **Customer-facing** (`quote_create` → HTML/PDF):
-   - **One pricing line** at the **premium customer rate** for the trade:
-     - Deck: ~$111/sqft | Garage: ~$131/sqft | Addition: ~$166/sqft (live component sums + premium)
-   - Use `deck installed all-in`, `garage built all-in`, or `addition built all-in` from catalog — never deck rate for garage/addition
+   - **Deck**: ONE all-in line — `deck installed all-in` × sqft (~$111/sqft quote rate)
+   - **Garage**: TWO lines (materials first, then labor):
+     - `garage materials package` × sqft (~$59/sqft quote) — slab, lumber, roof, siding, windows, subs
+     - `garage labor package` × sqft (~$72/sqft quote) — framing, roofing, siding, supervision
+   - **Addition**: TWO lines (materials first, then labor):
+     - `addition materials package` × sqft (~$84/sqft quote)
+     - `addition labor package` × sqft (~$81/sqft quote)
+   - Rates from `cost_lookup` after `refresh_live_pricing.py` — never hardcode
    - **`scope_of_work` (required)**: detailed description of work — use sections and `-` bullets covering:
      - Site prep, layout, and utility locate (Dig Safe)
      - Permits and inspections
@@ -104,7 +109,7 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
 - **Summary**: [2–3 sentences]
 - **Contact**: [phone/email/DM if visible, else "reply via platform"]
 - **Suggested action**: [call within 2h | site visit this week | send ballpark quote | pass]
-- **Customer quote**: [$Z total at premium rate — path to HTML/PDF]
+- **Customer quote**: [Deck: $Z total | Garage/Addition: $X materials + $Y labor = $Z — quote path]
 - **Internal**: [floor $F | negotiation room $N | mat/labor | days | labor/day]
 - **Notes**: [permits, competitors, red flags]
 

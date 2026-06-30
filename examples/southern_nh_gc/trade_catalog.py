@@ -80,7 +80,47 @@ def _internal_packages(overrides: dict[str, Any]) -> list[tuple[str, str, str, f
     ]
 
 
-INTERNAL_LABOR_PACKAGES: list[tuple[str, str, str, float]] = []
+# Customer quote packages — deck = all-in; garage/addition = materials + labor (two lines)
+TRADE_QUOTE_PACKAGES: dict[str, list[tuple[str, str, str]]] = {
+    "deck": [("deck installed all-in", "labor", "sqft")],
+    "covered porch": [
+        ("porch materials package", "material", "sqft"),
+        ("porch labor package", "labor", "sqft"),
+    ],
+    "garage": [
+        ("garage materials package", "material", "sqft"),
+        ("garage labor package", "labor", "sqft"),
+    ],
+    "addition": [
+        ("addition materials package", "material", "sqft"),
+        ("addition labor package", "labor", "sqft"),
+    ],
+}
+
+
+def _trade_package_floors(
+    trade: str,
+    overrides: dict[str, Any],
+) -> list[tuple[str, str, str, float]]:
+    """Catalog lines with floor $/sqft for each quote package."""
+    if trade == "deck":
+        return [
+            (
+                "deck installed all-in",
+                "labor",
+                "sqft",
+                trade_floor_sqft("deck", overrides),
+            )
+        ]
+    mat, lab = mat_labor_split(trade, overrides)
+    packages = TRADE_QUOTE_PACKAGES.get(trade, [])
+    out: list[tuple[str, str, str, float]] = []
+    for name, category, unit in packages:
+        if "material" in name:
+            out.append((name, category, unit, mat))
+        elif "labor" in name:
+            out.append((name, category, unit, lab))
+    return out
 
 # Flat add-ons (floor)
 FLAT_ADDONS: list[tuple[str, str, str, float]] = [
@@ -115,17 +155,12 @@ def build_catalog_items(
     customer: list[tuple[str, str, str, float]] = []
     internal: list[tuple[str, str, str, float]] = []
 
-    # All-in packages per trade (primary quote line)
-    for trade, catalog_name in (
-        ("deck", "deck installed all-in"),
-        ("garage", "garage built all-in"),
-        ("addition", "addition built all-in"),
-        ("covered porch", "covered porch all-in"),
-    ):
-        floor_sqft = trade_floor_sqft(trade, ov)
-        customer.append((catalog_name, "labor", "sqft", customer_price(floor_sqft)))
+    # Trade quote packages (deck = 1 all-in line; garage/addition = materials + labor)
+    for trade in ("deck", "garage", "addition", "covered porch"):
+        for name, category, unit, floor_sqft in _trade_package_floors(trade, ov):
+            customer.append((name, category, unit, customer_price(floor_sqft)))
 
-    # Materials, labor, equipment, subs — premium on every sell line
+    # Line-item materials, labor, equipment, subs — premium on every sell line
     for group in (
         SHARED_MATERIALS,
         SHARED_LABOR,

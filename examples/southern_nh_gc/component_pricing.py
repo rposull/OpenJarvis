@@ -130,7 +130,7 @@ def mat_labor_split(
     trade: str,
     overrides: dict[str, Any] | None = None,
 ) -> tuple[float, float]:
-    """Floor material and labor $/sqft from component categories."""
+    """Floor $/sqft: materials (incl. subs & allowances) vs labor."""
     ov = overrides or {}
     material = 0.0
     labor = 0.0
@@ -139,8 +139,31 @@ def mat_labor_split(
         if comp.category == "labor":
             labor += val
         else:
+            # material, subcontract, other → materials bucket
             material += val
     return round(material, 2), round(labor, 2)
+
+
+def material_labor_rows(
+    trade: str,
+    overrides: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Per-sqft material and labor rows with component detail (internal)."""
+    ov = overrides or {}
+    mat_total, lab_total = mat_labor_split(trade, ov)
+    mat_rows = []
+    lab_rows = []
+    for comp in TRADE_COMPONENTS.get(trade, ()):
+        val = _component_floor(ov, trade, comp)
+        row = {"label": comp.label, "floor_per_sqft": round(val, 2)}
+        if comp.category == "labor":
+            lab_rows.append(row)
+        else:
+            mat_rows.append(row)
+    return [
+        {"type": "materials", "floor_per_sqft": mat_total, "components": mat_rows},
+        {"type": "labor", "floor_per_sqft": lab_total, "components": lab_rows},
+    ]
 
 
 def deck_floor_from_benchmark(overrides: dict[str, Any] | None = None) -> float:

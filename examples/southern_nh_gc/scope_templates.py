@@ -1,7 +1,7 @@
 """Default scope-of-work text for customer quotes — customize per job.
 
 Use in quote_create ``scope_of_work`` / ``exclusions`` / ``estimated_timeline``.
-Pricing stays one all-in line; this is the detailed work description.
+Pricing stays one all-in line for decks; garage and addition use materials + labor lines.
 """
 
 from __future__ import annotations
