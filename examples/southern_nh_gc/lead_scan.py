@@ -17,10 +17,28 @@ Schedule (weekdays + Saturday 6 AM local — adjust cron for your timezone)::
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import click
+
+_ROOT = Path(__file__).resolve().parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from shop_pricing import (
+    LABOR_PER_SQFT,
+    MATERIAL_PER_SQFT,
+    MIN_JOB_SIZE,
+    PRICE_PER_SQFT,
+    REFERENCE_CREW_DAYS,
+    REFERENCE_DECK_SQFT,
+    SQFT_PER_CREW_DAY,
+    TARGET_PROFIT_DAY,
+    TARGET_PROFIT_DAY_MAX,
+    TARGET_PROFIT_DAY_MIN,
+)
 
 DEFAULT_TOWNS = (
     "Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, "
@@ -29,11 +47,10 @@ DEFAULT_TOWNS = (
 
 DEFAULT_JOB_TYPES = "decks, garages, home additions"
 
-# $100/sqft all-in; ~$42/sqft margin → 12–24 sqft/day ≈ $500–$1,000/day profit
-DEFAULT_PRICE_PER_SQFT = 100
-DEFAULT_MIN_JOB_SIZE = 10_000  # 100 sqft minimum at $100/sqft
-DEFAULT_TARGET_PROFIT_DAY = 750  # middle of $500–$1,000/day goal
-DEFAULT_MARKUP_RATE = 0.0  # catalog prices are already sell rates
+DEFAULT_PRICE_PER_SQFT = round(PRICE_PER_SQFT)
+DEFAULT_MIN_JOB_SIZE = MIN_JOB_SIZE
+DEFAULT_TARGET_PROFIT_DAY = TARGET_PROFIT_DAY
+DEFAULT_MARKUP_RATE = 0.0
 
 LEAD_TOOLS = [
     "web_search",
@@ -162,32 +179,32 @@ def main(
         ),
     }[notify]
 
-    margin_per_sqft = price_per_sqft - 58  # matches seed_cost_catalog internal load
-
     prompt = (
         f"Today is {today}. Run a full southern NH GC lead scan.\n\n"
         f"**Towns to prioritize**: {town_str}\n"
         f"**Job types**: {job_types}\n"
-        f"**Pricing**: ${price_per_sqft:.0f}/sqft installed (material + labor)\n"
-        f"**Profit target**: ${target_profit_day}/crew-day on site "
-        f"(ideal range $500–$1,000/day)\n"
-        f"**Minimum job size**: ${min_job_size:,} contract value — skip smaller\n"
-        f"**Quote markup**: {markup_rate}% (catalog items are already sell price)\n\n"
-        "Follow your system workflow: recall prior leads from memory, search "
-        "homeowner and bid sources, score new opportunities, store each lead.\n\n"
+        f"**Pricing** (from real 144 sqft deck job):\n"
+        f"  - Material: ${MATERIAL_PER_SQFT:.2f}/sqft\n"
+        f"  - Labor: ${LABOR_PER_SQFT:.2f}/sqft\n"
+        f"  - Total: ~${price_per_sqft:.0f}/sqft\n"
+        f"**Productivity**: ~{SQFT_PER_CREW_DAY:.0f} sqft/crew-day "
+        f"({REFERENCE_DECK_SQFT} sqft in {REFERENCE_CREW_DAYS} days)\n"
+        f"**Labor income target**: ${TARGET_PROFIT_DAY_MIN}–${TARGET_PROFIT_DAY_MAX}/day "
+        f"(reference job ~${TARGET_PROFIT_DAY}/day)\n"
+        f"**Minimum job size**: ${min_job_size:,}\n"
+        f"**Quote markup**: {markup_rate}%\n\n"
+        "Follow your system workflow: recall prior leads, search sources, score leads.\n\n"
         "**For every hot lead (score 7+)**:\n"
-        "1. Estimate footprint sqft from the post. Price main area with catalog "
-        "item `deck installed all-in`, `garage built all-in`, or "
-        "`addition shell all-in` at "
-        f"${price_per_sqft:.0f}/sqft. Add stairs, doors, permits as line items.\n"
-        "2. Estimate crew-days on site and compute profit/day: "
-        f"(sqft × ${margin_per_sqft:.0f} margin) ÷ days. Prefer jobs ≥ "
-        f"${target_profit_day}/day.\n"
-        "3. quote_create (markup_rate={markup_rate}), project_create, "
-        "project_update_status to quoted.\n"
+        "1. Estimate sqft. Quote with TWO lines per job type: "
+        "`deck material` + `deck labor` (or garage/addition equivalents) "
+        f"at ${MATERIAL_PER_SQFT:.2f} and ${LABOR_PER_SQFT:.2f}/sqft.\n"
+        "2. Estimate crew-days = sqft ÷ "
+        f"{SQFT_PER_CREW_DAY:.0f}. Labor/day = (sqft × "
+        f"${LABOR_PER_SQFT:.2f}) ÷ days. Prefer ${TARGET_PROFIT_DAY_MIN}–"
+        f"${TARGET_PROFIT_DAY_MAX}/day.\n"
+        "3. quote_create, project_create, project_update_status to quoted.\n"
         f"4. {notify_instructions}\n\n"
-        "Produce the standard lead report with sqft, contract total, "
-        "estimated profit/day, and quote file paths."
+        "Report: sqft, material $, labor $, total, est. days, labor $/day, quote path."
     )
 
     tools = list(LEAD_TOOLS)
