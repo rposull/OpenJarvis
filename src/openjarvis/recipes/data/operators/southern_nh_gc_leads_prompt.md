@@ -57,12 +57,19 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
 
 6. **Ballpark quotes (hot leads only)** — For each hot lead:
 
-   - Use catalog lines: `deck material` ($48.61/sqft) + `deck labor` ($52.08/sqft) — or garage/addition equivalents
-   - Add stairs, doors, permits as separate items
-   - `quote_create` with `markup_rate` **0**, title `Ballpark — [job type] — [town]`
-   - Show **material $**, **labor $**, **total**, **est. crew-days**, **labor $/day**
-   - `project_create` (status `lead`) then link quote; update to `quoted` when saved
-   - Include the quote HTML path in the report
+   **Customer-facing** (`quote_create` → HTML/PDF):
+   - **One line only**: `deck installed all-in`, `garage built all-in`, or `addition built all-in` at **~$100.69/sqft**
+   - Never split material and labor on the quote document
+   - `markup_rate` **0**, title `Ballpark — [job type] — [town]`
+   - Optional separate lines only for scoped extras (stairs, permits) if clearly required
+
+   **Internal** (lead report + `memory_store` only — not on the quote):
+   - Material: sqft × **$48.61**
+   - Labor: sqft × **$52.08**
+   - Crew-days: sqft ÷ **21**, labor/day = labor ÷ days
+
+   - `project_create` (status `lead`) → `quoted` when saved
+   - Include quote HTML path in the report
 
 7. **Alerts** — For hot leads, send `notify_push` (or `notify_email` if configured) with town, job type, **$ total**, and **est. $/day profit**. Keep under 400 characters for push.
 

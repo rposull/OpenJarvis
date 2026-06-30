@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Seed a southern NH GC cost catalog for deck, garage, and addition quotes.
 
-Benchmark: 144 sqft deck — $7,000 material + $7,500 labor (~7 crew-days).
+Customer quotes: one all-in $/sqft line (no material/labor split on the PDF).
+Internal mat/labor math lives in shop_pricing.py for lead reports only.
 
 Run once before lead scans::
 
@@ -22,36 +23,32 @@ if str(_ROOT) not in sys.path:
 from openjarvis.construction.store import ConstructionStore
 
 from shop_pricing import (
-    LABOR_PER_SQFT,
     LABOR_PER_CREW_DAY,
+    LABOR_PER_SQFT,
     MATERIAL_PER_SQFT,
     PRICE_PER_SQFT,
     REFERENCE_CREW_DAYS,
     REFERENCE_DECK_SQFT,
 )
 
-# --- Catalog: material + labor per sqft (from your 144 sqft deck) ------------
+# Customer-facing catalog items (quotes use all-in lines only)
 DEFAULT_ITEMS: list[tuple[str, str, str, float]] = [
     # (name, category, unit, unit_cost)
-    # Deck — quote as two lines: material sqft + labor sqft
-    ("deck material", "material", "sqft", round(MATERIAL_PER_SQFT, 2)),
-    ("deck labor", "labor", "sqft", round(LABOR_PER_SQFT, 2)),
-    # Garage / addition — same $/sqft split unless you tune separately
-    ("garage material", "material", "sqft", round(MATERIAL_PER_SQFT, 2)),
-    ("garage labor", "labor", "sqft", round(LABOR_PER_SQFT, 2)),
-    ("addition material", "material", "sqft", round(MATERIAL_PER_SQFT, 2)),
-    ("addition labor", "labor", "sqft", round(LABOR_PER_SQFT, 2)),
-    # Convenience single-line package (same total $/sqft)
     ("deck installed all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
-    # Add-ons
+    ("garage built all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
+    ("addition built all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
+    ("covered porch all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
+    # Optional extras (separate lines only when scoped in the job)
     ("deck stairs", "labor", "each", 1200.0),
     ("composite upgrade", "material", "sqft", 15.0),
-    ("glass railing upgrade", "material", "lf", 95.0),
-    ("garage door installed", "material", "each", 1800.0),
-    ("garage electrical rough-in", "material", "each", 2200.0),
     ("permit fee allowance", "other", "each", 450.0),
     ("dumpster 20yd", "equipment", "each", 550.0),
-    ("site protection misc", "material", "each", 250.0),
+]
+
+# Internal reference costs — not for customer quote_create line items
+INTERNAL_ITEMS: list[tuple[str, str, str, float]] = [
+    ("_internal deck material", "material", "sqft", round(MATERIAL_PER_SQFT, 2)),
+    ("_internal deck labor", "labor", "sqft", round(LABOR_PER_SQFT, 2)),
 ]
 
 
@@ -60,17 +57,16 @@ def main() -> None:
     """Load default GC unit costs into the construction store."""
     store = ConstructionStore()
 
-    for name, category, unit, unit_cost in DEFAULT_ITEMS:
+    for name, category, unit, unit_cost in DEFAULT_ITEMS + INTERNAL_ITEMS:
         store.add_cost_item(name, unit_cost, category=category, unit=unit)
 
     items = store.search_cost_items()
     click.echo(f"Seeded {len(items)} cost catalog items.")
     click.echo(
-        f"Reference: {REFERENCE_DECK_SQFT} sqft deck in {REFERENCE_CREW_DAYS} days\n"
-        f"  Material: ${MATERIAL_PER_SQFT:.2f}/sqft\n"
-        f"  Labor:    ${LABOR_PER_SQFT:.2f}/sqft\n"
-        f"  Total:    ${PRICE_PER_SQFT:.2f}/sqft\n"
-        f"  Labor billing: ~${LABOR_PER_CREW_DAY:,.0f}/crew-day on site"
+        f"Customer quote rate: ${PRICE_PER_SQFT:.2f}/sqft all-in (single line)\n"
+        f"Internal reference ({REFERENCE_DECK_SQFT} sqft / {REFERENCE_CREW_DAYS} days):\n"
+        f"  Material: ${MATERIAL_PER_SQFT:.2f}/sqft | Labor: ${LABOR_PER_SQFT:.2f}/sqft\n"
+        f"  Labor billing: ~${LABOR_PER_CREW_DAY:,.0f}/crew-day"
     )
 
 

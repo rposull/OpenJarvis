@@ -21,4 +21,18 @@ LABOR_PER_CREW_DAY = LABOR_PER_SQFT * SQFT_PER_CREW_DAY  # ~$1,071/day
 MIN_JOB_SIZE = round(REFERENCE_DECK_SQFT * PRICE_PER_SQFT)  # $14,500
 TARGET_PROFIT_DAY_MIN = 500
 TARGET_PROFIT_DAY_MAX = 1_000
-TARGET_PROFIT_DAY = round(LABOR_PER_CREW_DAY)  # ~1,071 from reference job
+TARGET_PROFIT_DAY = round(LABOR_PER_CREW_DAY)
+
+
+def internal_breakdown(sqft: float) -> dict[str, float]:
+    """Material/labor split for your eyes only — never put on customer quotes."""
+    days = max(sqft / SQFT_PER_CREW_DAY, 1.0)
+    labor = sqft * LABOR_PER_SQFT
+    return {
+        "sqft": sqft,
+        "material": round(sqft * MATERIAL_PER_SQFT),
+        "labor": round(labor),
+        "total": round(sqft * PRICE_PER_SQFT),
+        "crew_days": round(days, 1),
+        "labor_per_day": round(labor / days),
+    }
