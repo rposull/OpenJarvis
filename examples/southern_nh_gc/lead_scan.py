@@ -3,7 +3,7 @@
 
 Run manually::
 
-    uv run python examples/southern_nh_gc/seed_cost_catalog.py
+    uv run python examples/southern_nh_gc/refresh_live_pricing.py
     uv run python examples/southern_nh_gc/lead_scan.py
 
     uv run python examples/southern_nh_gc/lead_scan.py \\
@@ -27,6 +27,8 @@ _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from live_pricing import load_live_overrides, pricing_summary
+from refresh_live_pricing import reseed_construction_store
 from shop_pricing import (
     BUSINESS_GOAL,
     CUSTOMER_QUOTE_PER_SQFT,
@@ -155,6 +157,12 @@ LEAD_TOOLS = [
     help="Alert channel for hot leads (requires .env — see .env.example).",
 )
 @click.option(
+    "--refresh-pricing/--no-refresh-pricing",
+    default=True,
+    show_default=True,
+    help="Reseed catalog from live_prices.json before scan (all trades/materials).",
+)
+@click.option(
     "--model",
     default=None,
     help="Model to use (e.g. qwen3:8b).",
@@ -181,6 +189,7 @@ def main(
     target_profit_day: int,
     markup_rate: float,
     notify: str,
+    refresh_pricing: bool,
     model: str | None,
     engine_key: str | None,
     output: Path | None,
@@ -192,6 +201,15 @@ def main(
         raise SystemExit(1)
 
     env_path = Path(__file__).resolve().parent / ".env"
+    live = load_live_overrides()
+    overrides: dict = dict(live.get("overrides") or {})
+    if refresh_pricing:
+        n = reseed_construction_store(overrides)
+        click.echo(f"Live pricing: reseeded {n} catalog items (all trades + materials).")
+    live_summary = pricing_summary(overrides)
+    if price_per_sqft == DEFAULT_PRICE_PER_SQFT:
+        price_per_sqft = live_summary["deck_customer_sqft"]
+
     if notify != "none":
         try:
             from openjarvis.notifications import load_env_file
@@ -238,6 +256,9 @@ def main(
         f"(floor reference ~${TARGET_PROFIT_DAY}/day)\n"
         f"**Minimum job size (floor)**: ${min_job_size:,}\n"
         f"**Quote markup**: {markup_rate}%\n"
+        f"**Live catalog**: always `cost_lookup` before quoting — every trade, "
+        "material, labor, equipment, and subcontract line includes the "
+        f"+{quote_premium:.0f}% premium in the stored sell price.\n"
         f"{owner_context}\n"
         "Follow your system workflow: recall prior leads, search sources, score leads.\n\n"
         "**For every hot lead (score 7+)**:\n"

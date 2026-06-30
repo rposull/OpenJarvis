@@ -12,8 +12,10 @@
 #   ollama pull qwen3:8b
 #   cp examples/southern_nh_gc/.env.example examples/southern_nh_gc/.env
 #   # edit .env — set NTFY_TOPIC for phone alerts (free ntfy app)
-#   uv run python examples/southern_nh_gc/seed_cost_catalog.py
+#   uv run python examples/southern_nh_gc/refresh_live_pricing.py
 #   uv run python examples/southern_nh_gc/lead_scan.py
+#
+# Live pricing: edit examples/southern_nh_gc/live_prices.json then refresh
 
 [engine]
 default = "ollama"

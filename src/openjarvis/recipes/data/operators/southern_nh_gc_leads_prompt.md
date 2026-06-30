@@ -58,6 +58,11 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
 
 6. **Ballpark quotes (hot leads only)** — For each hot lead:
 
+   **Live pricing (required)**:
+   - Run `cost_lookup` for the trade package and any add-ons (never guess prices)
+   - Catalog is refreshed from `live_prices.json` — premium applied to **all** trades and materials
+   - Trades: deck, garage, addition, porch all-in packages + carpenter/concrete/roofing labor + subs
+
    **Customer-facing** (`quote_create` → HTML/PDF):
    - **One pricing line** at the **premium customer rate** (~$110.76/sqft) — NOT the floor
    - Position slightly above typical southern NH competitor pricing; room to negotiate down
