@@ -28,10 +28,13 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from shop_pricing import (
+    BUSINESS_GOAL,
+    CUSTOMER_QUOTE_PER_SQFT,
+    FLOOR_PRICE_PER_SQFT,
     LABOR_PER_SQFT,
     MATERIAL_PER_SQFT,
     MIN_JOB_SIZE,
-    PRICE_PER_SQFT,
+    QUOTE_PREMIUM_PERCENT,
     REFERENCE_CREW_DAYS,
     REFERENCE_DECK_SQFT,
     SQFT_PER_CREW_DAY,
@@ -47,10 +50,32 @@ DEFAULT_TOWNS = (
 
 DEFAULT_JOB_TYPES = "decks, garages, home additions"
 
-DEFAULT_PRICE_PER_SQFT = round(PRICE_PER_SQFT)
+DEFAULT_PRICE_PER_SQFT = CUSTOMER_QUOTE_PER_SQFT
 DEFAULT_MIN_JOB_SIZE = MIN_JOB_SIZE
 DEFAULT_TARGET_PROFIT_DAY = TARGET_PROFIT_DAY
+DEFAULT_QUOTE_PREMIUM = QUOTE_PREMIUM_PERCENT
 DEFAULT_MARKUP_RATE = 0.0
+
+
+def _load_gc_context() -> str:
+    """Optional owner context (e.g. future ChatGPT export) for pricing judgment."""
+    import json
+
+    for path in (
+        Path.home() / ".openjarvis" / "gc_context.json",
+        _ROOT / "gc_context.json",
+    ):
+        if not path.is_file():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return (
+                f"\n\n**Owner context** (from `{path}` — use for pricing judgment):\n"
+                f"```json\n{json.dumps(data, indent=2)}\n```\n"
+            )
+        except (OSError, json.JSONDecodeError):
+            continue
+    return ""
 
 LEAD_TOOLS = [
     "web_search",
@@ -92,7 +117,21 @@ LEAD_TOOLS = [
     default=DEFAULT_PRICE_PER_SQFT,
     show_default=True,
     type=float,
-    help="Installed rate $/sqft (material + labor).",
+    help="Customer quote rate $/sqft (includes competitive premium).",
+)
+@click.option(
+    "--quote-premium",
+    default=DEFAULT_QUOTE_PREMIUM,
+    show_default=True,
+    type=float,
+    help="%% above floor rate baked into customer quotes (negotiation room).",
+)
+@click.option(
+    "--floor-per-sqft",
+    default=round(FLOOR_PRICE_PER_SQFT, 2),
+    show_default=True,
+    type=float,
+    help="Never quote below this $/sqft without explicit approval.",
 )
 @click.option(
     "--target-profit-day",
@@ -137,6 +176,8 @@ def main(
     job_types: str,
     min_job_size: int,
     price_per_sqft: float,
+    quote_premium: float,
+    floor_per_sqft: float,
     target_profit_day: int,
     markup_rate: float,
     notify: str,
@@ -179,40 +220,40 @@ def main(
         ),
     }[notify]
 
+    owner_context = _load_gc_context()
+
     prompt = (
         f"Today is {today}. Run a full southern NH GC lead scan.\n\n"
+        f"**Owner goal**: {BUSINESS_GOAL}\n"
         f"**Towns to prioritize**: {town_str}\n"
         f"**Job types**: {job_types}\n"
-        f"**Pricing** (from real 144 sqft deck job):\n"
-        f"  - Material: ${MATERIAL_PER_SQFT:.2f}/sqft\n"
-        f"  - Labor: ${LABOR_PER_SQFT:.2f}/sqft\n"
-        f"  - Total: ~${price_per_sqft:.0f}/sqft\n"
+        f"**Customer quote rate**: ${price_per_sqft:.2f}/sqft "
+        f"(~{quote_premium:.0f}% above ${floor_per_sqft:.2f}/sqft floor)\n"
+        f"**Pricing rule**: Quote slightly above typical southern NH competitors. "
+        f"Negotiate down toward the floor if needed, but **never below "
+        f"${floor_per_sqft:.2f}/sqft** without explicit owner approval.\n"
         f"**Productivity**: ~{SQFT_PER_CREW_DAY:.0f} sqft/crew-day "
         f"({REFERENCE_DECK_SQFT} sqft in {REFERENCE_CREW_DAYS} days)\n"
         f"**Labor income target**: ${TARGET_PROFIT_DAY_MIN}–${TARGET_PROFIT_DAY_MAX}/day "
-        f"(reference job ~${TARGET_PROFIT_DAY}/day)\n"
-        f"**Minimum job size**: ${min_job_size:,}\n"
-        f"**Quote markup**: {markup_rate}%\n\n"
+        f"(floor reference ~${TARGET_PROFIT_DAY}/day)\n"
+        f"**Minimum job size (floor)**: ${min_job_size:,}\n"
+        f"**Quote markup**: {markup_rate}%\n"
+        f"{owner_context}\n"
         "Follow your system workflow: recall prior leads, search sources, score leads.\n\n"
         "**For every hot lead (score 7+)**:\n"
-        "1. Estimate sqft. **Customer quote** (`quote_create`): ONE all-in line only — "
-        "`deck installed all-in`, `garage built all-in`, or `addition built all-in` "
-        f"at ${price_per_sqft:.2f}/sqft. Do NOT split material and labor on the quote.\n"
-        "2. **Internal breakdown** (lead report + memory_store only, not on quote): "
-        f"material = sqft × ${MATERIAL_PER_SQFT:.2f}, labor = sqft × "
-        f"${LABOR_PER_SQFT:.2f}, crew-days = sqft ÷ {SQFT_PER_CREW_DAY:.0f}, "
-        "labor/day = labor ÷ days.\n"
-        "3. quote_create with:\n"
-        "   - ONE pricing line (all-in $/sqft)\n"
-        "   - scope_of_work: detailed bullets — site prep, permits, footings, "
-        "framing, decking/railing, cleanup, inspections (customize to the post)\n"
-        "   - exclusions: electrical, plumbing, landscaping unless in scope\n"
-        "   - estimated_timeline: crew-days on site\n"
-        "   See examples/southern_nh_gc/scope_templates.py for deck/garage/addition templates.\n"
+        "1. **Customer quote** (`quote_create`): ONE all-in line at the **customer "
+        f"rate** (${price_per_sqft:.2f}/sqft) using `deck installed all-in` or "
+        "garage/addition equivalent. No material/labor split on the PDF.\n"
+        "2. **Internal only** (report + memory): floor at "
+        f"${floor_per_sqft:.2f}/sqft, mat ${MATERIAL_PER_SQFT:.2f}/sqft + labor "
+        f"${LABOR_PER_SQFT:.2f}/sqft, negotiation room (quote minus floor), "
+        f"crew-days, labor/day.\n"
+        "3. quote_create must include detailed `scope_of_work`, `exclusions`, "
+        "`estimated_timeline` (see scope_templates.py).\n"
         "4. project_create, project_update_status to quoted.\n"
         f"5. {notify_instructions}\n\n"
-        "Report sections: customer total + quote path; separate **Internal** line "
-        "with mat/labor/days (for you only)."
+        "Report: customer quote total + path; **Internal** line with floor, "
+        "negotiation room, mat/labor, days."
     )
 
     tools = list(LEAD_TOOLS)
@@ -255,8 +296,8 @@ def main(
         f"  Southern NH GC Lead Scan — {today}\n"
         f"  Towns: {town_str}\n"
         f"  Focus: {job_types}\n"
-        f"  Rate: ${price_per_sqft:.0f}/sqft | Min job: ${min_job_size:,}\n"
-        f"  Profit target: ${target_profit_day}/day\n"
+        f"  Quote: ${price_per_sqft:.2f}/sqft (+{quote_premium:.0f}% over "
+        f"${floor_per_sqft:.2f} floor) | Min: ${min_job_size:,}\n"
         f"{'=' * 60}\n"
     )
     click.echo(header)

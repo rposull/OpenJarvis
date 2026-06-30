@@ -23,26 +23,28 @@ if str(_ROOT) not in sys.path:
 from openjarvis.construction.store import ConstructionStore
 
 from shop_pricing import (
+    CUSTOMER_QUOTE_PER_SQFT,
+    FLOOR_PRICE_PER_SQFT,
     LABOR_PER_CREW_DAY,
     LABOR_PER_SQFT,
     MATERIAL_PER_SQFT,
-    PRICE_PER_SQFT,
+    QUOTE_PREMIUM_PERCENT,
     REFERENCE_CREW_DAYS,
     REFERENCE_DECK_SQFT,
+    premium_addon,
 )
 
-# Customer-facing catalog items (quotes use all-in lines only)
+# Customer-facing catalog — all-in rates include competitive premium
 DEFAULT_ITEMS: list[tuple[str, str, str, float]] = [
     # (name, category, unit, unit_cost)
-    ("deck installed all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
-    ("garage built all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
-    ("addition built all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
-    ("covered porch all-in", "labor", "sqft", round(PRICE_PER_SQFT, 2)),
-    # Optional extras (separate lines only when scoped in the job)
-    ("deck stairs", "labor", "each", 1200.0),
-    ("composite upgrade", "material", "sqft", 15.0),
-    ("permit fee allowance", "other", "each", 450.0),
-    ("dumpster 20yd", "equipment", "each", 550.0),
+    ("deck installed all-in", "labor", "sqft", CUSTOMER_QUOTE_PER_SQFT),
+    ("garage built all-in", "labor", "sqft", CUSTOMER_QUOTE_PER_SQFT),
+    ("addition built all-in", "labor", "sqft", CUSTOMER_QUOTE_PER_SQFT),
+    ("covered porch all-in", "labor", "sqft", CUSTOMER_QUOTE_PER_SQFT),
+    ("deck stairs", "labor", "each", premium_addon(1200.0)),
+    ("composite upgrade", "material", "sqft", premium_addon(15.0)),
+    ("permit fee allowance", "other", "each", premium_addon(450.0)),
+    ("dumpster 20yd", "equipment", "each", premium_addon(550.0)),
 ]
 
 # Internal reference costs — not for customer quote_create line items
@@ -63,10 +65,11 @@ def main() -> None:
     items = store.search_cost_items()
     click.echo(f"Seeded {len(items)} cost catalog items.")
     click.echo(
-        f"Customer quote rate: ${PRICE_PER_SQFT:.2f}/sqft all-in (single line)\n"
-        f"Internal reference ({REFERENCE_DECK_SQFT} sqft / {REFERENCE_CREW_DAYS} days):\n"
+        f"Customer quote rate: ${CUSTOMER_QUOTE_PER_SQFT:.2f}/sqft "
+        f"(+{QUOTE_PREMIUM_PERCENT:.0f}% above ${FLOOR_PRICE_PER_SQFT:.2f} floor)\n"
+        f"Internal floor ({REFERENCE_DECK_SQFT} sqft / {REFERENCE_CREW_DAYS} days):\n"
         f"  Material: ${MATERIAL_PER_SQFT:.2f}/sqft | Labor: ${LABOR_PER_SQFT:.2f}/sqft\n"
-        f"  Labor billing: ~${LABOR_PER_CREW_DAY:,.0f}/crew-day"
+        f"  Labor billing: ~${LABOR_PER_CREW_DAY:,.0f}/crew-day at floor rate"
     )
 
 

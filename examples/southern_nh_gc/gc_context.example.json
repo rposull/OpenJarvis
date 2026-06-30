@@ -1,0 +1,12 @@
+{
+  "business_goals": [
+    "Saving toward buying or building a house",
+    "Hit $500-1000 labor billing per crew-day on site"
+  ],
+  "pricing_strategy": {
+    "quote_premium_percent": 10,
+    "instruction": "Quote slightly above competitive southern NH GC rates. Negotiate down toward floor, never below floor without explicit approval.",
+    "floor_note": "Floor rate matches your real 144 sqft deck economics (~$100.69/sqft all-in)"
+  },
+  "notes": "Optional: paste summaries from ChatGPT conversations, competitor intel, or personal constraints here. Loaded automatically when present at ~/.openjarvis/gc_context.json"
+}

@@ -1,5 +1,8 @@
 # Southern NH GC — decks, garages, additions
-# Benchmark: 144 sqft deck — $14,500 all-in (~7 days); mat/labor split internal only
+# Benchmark: 144 sqft deck — floor $14,500 (~$100.69/sqft); quotes ~10% above
+#
+# Optional owner context (goals, ChatGPT notes):
+#   cp examples/southern_nh_gc/gc_context.example.json ~/.openjarvis/gc_context.json
 #
 # Copy to ~/.openjarvis/config.toml
 #
