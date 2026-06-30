@@ -58,10 +58,20 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
 6. **Ballpark quotes (hot leads only)** — For each hot lead:
 
    **Customer-facing** (`quote_create` → HTML/PDF):
-   - **One line only**: `deck installed all-in`, `garage built all-in`, or `addition built all-in` at **~$100.69/sqft**
-   - Never split material and labor on the quote document
+   - **One pricing line only**: `deck installed all-in`, `garage built all-in`, or `addition built all-in` at **~$100.69/sqft** — no material/labor split
+   - **`scope_of_work` (required)**: detailed description of work — use sections and `-` bullets covering:
+     - Site prep, layout, and utility locate (Dig Safe)
+     - Permits and inspections
+     - Foundation / footings / slab
+     - Framing and structural connections
+     - Decking, roofing, siding, or envelope as applicable
+     - Railing, stairs, doors, trim
+     - Cleanup and final walkthrough
+     - Customize dimensions, materials, and town-specific details from the lead
+   - **`exclusions`**: electrical, plumbing, HVAC, paint/floors, landscaping unless explicitly included
+   - **`estimated_timeline`**: working days on site (reference: 144 sqft deck ≈ 7 days)
+   - Use `examples/southern_nh_gc/scope_templates.py` as a starting template
    - `markup_rate` **0**, title `Ballpark — [job type] — [town]`
-   - Optional separate lines only for scoped extras (stairs, permits) if clearly required
 
    **Internal** (lead report + `memory_store` only — not on the quote):
    - Material: sqft × **$48.61**
@@ -71,7 +81,7 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
    - `project_create` (status `lead`) → `quoted` when saved
    - Include quote HTML path in the report
 
-7. **Alerts** — For hot leads, send `notify_push` (or `notify_email` if configured) with town, job type, **$ total**, and **est. $/day profit**. Keep under 400 characters for push.
+7. **Alerts** — For hot leads, `notify_push` / `notify_email` with town, job type, and **customer total $** only (no mat/labor split). Keep under 400 characters.
 
 8. **Output format**
 
@@ -84,7 +94,8 @@ Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelha
 - **Summary**: [2–3 sentences]
 - **Contact**: [phone/email/DM if visible, else "reply via platform"]
 - **Suggested action**: [call within 2h | site visit this week | send ballpark quote | pass]
-- **Ballpark quote**: [$X mat + $Y labor = $Z | N sqft | ~D days | ~$L/day labor — quote path]
+- **Customer quote**: [$Z total — path to HTML/PDF with full scope of work]
+- **Internal** (your eyes only): [$X mat | $Y labor | ~D days | ~$L/day labor]
 - **Notes**: [permits, competitors, red flags]
 
 ## Warm leads (score 4–6)

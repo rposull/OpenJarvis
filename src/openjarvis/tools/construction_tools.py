@@ -330,7 +330,8 @@ class QuoteCreateTool(BaseTool):
             name="quote_create",
             description=(
                 "Generate a printable quote/estimate from line items and save it"
-                " as HTML (and PDF if available). Line item unit costs may be"
+                " as HTML (and PDF if available). Include a detailed scope_of_work"
+                " describing what will be done. Line item unit costs may be"
                 " given directly or resolved from the cost catalog."
             ),
             parameters={
@@ -345,6 +346,26 @@ class QuoteCreateTool(BaseTool):
                             " unit_cost? OR catalog_item}."
                         ),
                         "items": {"type": "object"},
+                    },
+                    "scope_of_work": {
+                        "type": "string",
+                        "description": (
+                            "Detailed scope of work for the customer — phases,"
+                            " materials, code compliance, cleanup. Use bullet"
+                            " lines starting with '-'."
+                        ),
+                    },
+                    "exclusions": {
+                        "type": "string",
+                        "description": (
+                            "Work NOT included (e.g. electrical, landscaping)."
+                        ),
+                    },
+                    "estimated_timeline": {
+                        "type": "string",
+                        "description": (
+                            "Estimated schedule (e.g. '7 working days on site')."
+                        ),
                     },
                     "tax_rate": {
                         "type": "number",
@@ -409,6 +430,9 @@ class QuoteCreateTool(BaseTool):
             items=line_items,
             totals=totals,
             notes=str(params.get("notes", "") or ""),
+            scope_of_work=str(params.get("scope_of_work", "") or ""),
+            exclusions=str(params.get("exclusions", "") or ""),
+            estimated_timeline=str(params.get("estimated_timeline", "") or ""),
             tax_rate=tax_rate,
             markup_rate=markup_rate,
         )

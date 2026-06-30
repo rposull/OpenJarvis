@@ -41,6 +41,34 @@ def test_compute_quote_totals():
     assert totals["total"] == 1320.0
 
 
+def test_format_scope_html_bullets_and_sections():
+    html = docs.format_scope_html(
+        "Site work:\n- Dig footings\n- Layout\n\nFraming:\n- Install joists"
+    )
+    assert "<h4>Site work</h4>" in html
+    assert "<li>Dig footings</li>" in html
+    assert "<h4>Framing</h4>" in html
+
+
+def test_render_quote_html_includes_scope():
+    items = [docs.LineItem("Deck — all-in", 144, "sqft", 100.69)]
+    totals = docs.compute_quote_totals(items)
+    html = docs.render_quote_html(
+        title="Deck — Merrimack",
+        client="Homeowner",
+        items=items,
+        totals=totals,
+        scope_of_work="- Install footings\n- Frame and deck\n- Install railing",
+        exclusions="- Electrical",
+        estimated_timeline="7 working days",
+    )
+    assert "Scope of Work" in html
+    assert "Install footings" in html
+    assert "Exclusions" in html
+    assert "7 working days" in html
+    assert "$14,499.36" in html
+
+
 def test_render_quote_html_contains_key_fields():
     items = [docs.LineItem("Concrete pour", 5, "yd", 150.0)]
     totals = docs.compute_quote_totals(items, tax_rate=8)

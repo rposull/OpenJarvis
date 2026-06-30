@@ -57,6 +57,29 @@ def test_project_update_invalid_status(env):
     assert result.success is False
 
 
+def test_quote_create_with_scope(env, tmp_path):
+    env.add_cost_item("deck installed all-in", 100.69, category="labor", unit="sqft")
+    result = QuoteCreateTool().execute(
+        title="Deck Quote",
+        client="Smith",
+        items=[
+            {
+                "catalog_item": "deck installed all-in",
+                "quantity": 144,
+                "unit": "sqft",
+            }
+        ],
+        scope_of_work="- Footings\n- Framing\n- Decking and railing",
+        exclusions="- Electrical",
+        estimated_timeline="7 working days",
+    )
+    assert result.success is True
+    html = Path(result.metadata["html_path"]).read_text(encoding="utf-8")
+    assert "Scope of Work" in html
+    assert "Footings" in html
+    assert "7 working days" in html
+
+
 def test_quote_create_writes_file(env, tmp_path):
     result = QuoteCreateTool().execute(
         title="Garage Slab",
