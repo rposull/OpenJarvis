@@ -39,17 +39,13 @@ Submissions POST directly to **rposull@hotmail.com** via [FormSubmit](https://fo
 
 After activation, the form redirects back to your site with a success message.
 
-## Deploy (free)
+## Deploy (free) — business URL
 
-**Netlify (recommended)**
+**Target URL:** https://osullivan-construction.netlify.app
 
-1. Connect repo with publish directory `examples/southern_nh_gc/website`
-2. Build command: `python3 build_site.py` (already in `netlify.toml`)
-3. Add your custom domain and set `siteUrl` in `site-config.js`
+See **`DEPLOY.md`** for step-by-step Netlify setup (takes ~5 minutes).
 
-**Vercel / Cloudflare Pages**
-
-Same folder, same build command.
+**GitHub Pages** (alternative): enable at https://github.com/rposull/OpenJarvis/settings/pages → source **GitHub Actions**.
 
 ## Get traffic — action checklist
 

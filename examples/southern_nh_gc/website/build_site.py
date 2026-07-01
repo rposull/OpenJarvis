@@ -8,6 +8,7 @@ Run from repo root or website folder:
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
@@ -532,6 +533,49 @@ def build_sitemap(urls: list[str]) -> None:
     )
 
 
+def patch_index_html() -> None:
+    path = ROOT / "index.html"
+    html = path.read_text(encoding="utf-8")
+    email = BIZ["email"]
+    thanks = BIZ.get("formThanksUrl", f"{SITE_URL}/thanks.html")
+
+    html = re.sub(
+        r'action="https://formsubmit\.co/[^"]+"',
+        f'action="https://formsubmit.co/{email}"',
+        html,
+    )
+    if 'name="_next"' in html:
+        html = re.sub(
+            r'<input type="hidden" name="_next" value="[^"]*">',
+            f'<input type="hidden" name="_next" value="{thanks}">',
+            html,
+        )
+    else:
+        html = html.replace(
+            f'action="https://formsubmit.co/{email}"',
+            f'action="https://formsubmit.co/{email}">\n'
+            f'          <input type="hidden" name="_next" value="{thanks}"',
+            1,
+        )
+    html = re.sub(
+        r'canonical: "[^"]*"',
+        f'canonical: "{SITE_URL}/"',
+        html,
+    )
+    write(path, html)
+
+
+def write_cname() -> None:
+    if not BIZ.get("customDomainEnabled"):
+        cname = ROOT / "CNAME"
+        if cname.exists():
+            cname.unlink()
+        return
+    domain = BIZ.get("customDomain", "").strip()
+    if domain:
+        write(ROOT / "CNAME", f"{domain}\n")
+
+
 def build_robots() -> None:
     write(
         ROOT / "robots.txt",
@@ -546,6 +590,8 @@ Sitemap: {SITE_URL}/sitemap.xml
 def main() -> None:
     print(f"Building SEO pages for {BUSINESS_NAME}…")
     write_site_config()
+    patch_index_html()
+    write_cname()
     urls = [f"{SITE_URL}/"]
     urls.extend(build_service_pages())
     urls.extend(build_location_pages())
