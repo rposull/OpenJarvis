@@ -63,49 +63,84 @@
     });
   }
 
+  async function submitToFormspree(payload) {
+    const res = await fetch(`https://formspree.io/f/${cfg.formspreeId}`, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  }
+
+  async function submitToFormSubmit(payload) {
+    const to = cfg.email;
+    if (!to) return false;
+
+    const body = {
+      ...payload,
+      _subject: `Estimate request: ${payload.project || "project"} — ${payload.town || "NH"}`,
+      _template: "table",
+      _captcha: "false",
+    };
+
+    const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.success === "true" || data.success === true;
+  }
+
   function setupForm() {
     const form = document.getElementById("quote-form");
     const success = document.getElementById("form-success");
+    const error = document.getElementById("form-error");
+    const submitBtn = document.getElementById("form-submit-btn");
     if (!form) return;
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const data = new FormData(form);
-      const payload = Object.fromEntries(data.entries());
+      if (success) success.style.display = "none";
+      if (error) error.style.display = "none";
 
-      if (cfg.formspreeId) {
-        try {
-          const res = await fetch(`https://formspree.io/f/${cfg.formspreeId}`, {
-            method: "POST",
-            headers: { Accept: "application/json", "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          if (res.ok) {
-            form.reset();
-            if (success) success.style.display = "block";
-            return;
-          }
-        } catch (_) {
-          /* fall through */
+      const data = new FormData(form);
+      if (data.get("_honey")) return;
+
+      const payload = Object.fromEntries(
+        [...data.entries()].filter(([key]) => !key.startsWith("_"))
+      );
+
+      const originalLabel = submitBtn ? submitBtn.textContent : "";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending…";
+      }
+
+      try {
+        let sent = false;
+        if (cfg.formspreeId) {
+          sent = await submitToFormspree(payload);
+        } else if (cfg.email) {
+          sent = await submitToFormSubmit(payload);
+        }
+
+        if (sent) {
+          form.reset();
+          if (success) success.style.display = "block";
+          return;
+        }
+      } catch (_) {
+        /* show error below */
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel;
         }
       }
 
-      const phoneDigits = (cfg.phone || "").replace(/\D/g, "").slice(-10);
-      const subject = encodeURIComponent(
-        `Estimate request: ${payload.project || "project"} — ${payload.town || "NH"}`
-      );
-      const body = encodeURIComponent(
-        `Name: ${payload.name}\nPhone: ${payload.phone}\nEmail: ${payload.email || ""}\nTown: ${payload.town || ""}\nProject: ${payload.project}\n\n${payload.message}`
-      );
-
-      if (cfg.email) {
-        window.location.href = `mailto:${cfg.email}?subject=${subject}&body=${body}`;
-      } else if (phoneDigits.length === 10) {
-        window.location.href = `sms:+1${phoneDigits}?body=${body}`;
-      } else if (success) {
-        form.reset();
-        success.style.display = "block";
-      }
+      if (error) error.style.display = "block";
     });
   }
 

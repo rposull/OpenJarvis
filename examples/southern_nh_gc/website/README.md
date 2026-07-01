@@ -31,6 +31,14 @@ SEO-focused static site for your general contracting business. Built to rank for
 
    Visit http://localhost:8080
 
+## Contact form → your inbox
+
+Submissions go **directly to the email in `data/business.json`** via [FormSubmit](https://formsubmit.co) (free, no account needed).
+
+**One-time setup after deploy:** submit a test request on your live site. FormSubmit emails you an activation link — click it once and all future leads arrive in your inbox.
+
+Optional override: set `formspreeId` in `business.json` if you prefer Formspree instead.
+
 ## Deploy (free)
 
 **Netlify (recommended)**
@@ -80,15 +88,9 @@ Use the same phone and business name everywhere — Google matches citations.
 
 ### 5. Connect leads to automation
 
-**Formspree → your phone**
+Form submissions email **rposull@hotmail.com** automatically via FormSubmit.
 
-1. Sign up at https://formspree.io
-2. Set `formspreeId` in `site-config.js`
-3. Enable email notifications + optional webhook to Zapier/Make
-
-**Formspree → OpenJarvis** (advanced)
-
-Wire Formspree webhook to a small endpoint that creates leads for `lead_scan.py` / `follow_up.py`.
+**FormSubmit → OpenJarvis** (advanced): forward FormSubmit emails to a webhook or parse with Zapier/Make for `lead_scan.py` / `follow_up.py`.
 
 ### 6. Track what works
 

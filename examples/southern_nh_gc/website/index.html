@@ -215,9 +215,11 @@
             <label for="message">Project details *</label>
             <textarea id="message" name="message" required placeholder="Approximate size, timeline, and what you're looking for…"></textarea>
           </div>
-          <button type="submit" class="btn btn-primary" style="width:100%">Send Request</button>
+          <button type="submit" class="btn btn-primary" id="form-submit-btn" style="width:100%">Send Request</button>
           <p class="form-note">We never share your information. For urgent inquiries, call us directly.</p>
-          <div class="form-success" id="form-success">Thanks! We'll be in touch shortly.</div>
+          <div class="form-success" id="form-success">Thanks! Your request was sent — we'll be in touch within one business day.</div>
+          <div class="form-error" id="form-error">Something went wrong. Please call (978) 888-8068 or email rposull@hotmail.com.</div>
+          <input type="text" name="_honey" class="form-honey" tabindex="-1" autocomplete="off" aria-hidden="true">
         </form>
       </div>
     </section>
