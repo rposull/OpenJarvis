@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://osullivanconstructionpm.com/sitemap.xml
+Sitemap: https://rposull.github.io/OpenJarvis/sitemap.xml
