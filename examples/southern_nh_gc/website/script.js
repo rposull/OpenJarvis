@@ -2,10 +2,11 @@
   const cfg = window.SITE_CONFIG || {};
 
   function applyConfig() {
-    const name = cfg.businessName || "Southern NH Construction";
+    const name = cfg.businessName || "O'Sullivan Construction & Property Management";
+    const logoName = cfg.logoShort || name;
     const tagline = cfg.tagline || "Decks · Garages · Home Additions";
-    const phone = cfg.phone || "(603) 555-0123";
-    const email = cfg.email || "hello@example.com";
+    const phone = cfg.phone || "(978) 888-8068";
+    const email = cfg.email || "";
     const area = cfg.serviceArea || "Southern New Hampshire and surrounding towns.";
 
     if (!window.PAGE_SEO?.title) {
@@ -14,9 +15,13 @@
 
     const logo = document.getElementById("logo-text");
     if (logo) {
-      const parts = name.split(" ");
-      const last = parts.pop() || "";
-      logo.innerHTML = `${parts.join(" ")} <span>${last}</span>`.trim();
+      if (cfg.logoShort) {
+        logo.textContent = logoName;
+      } else {
+        const parts = name.split(" ");
+        const last = parts.pop() || "";
+        logo.innerHTML = `${parts.join(" ")} <span>${last}</span>`.trim();
+      }
     }
 
     const heroTag = document.getElementById("hero-tagline");
@@ -27,18 +32,18 @@
     const phoneDigits = phone.replace(/\D/g, "");
     const tel = phoneDigits.length >= 10 ? `tel:+1${phoneDigits.slice(-10)}` : `tel:${phone}`;
 
-    ["hero-phone", "contact-phone"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.textContent = phone;
-        el.href = tel;
-      }
+    document.querySelectorAll("#hero-phone, #contact-phone, .cta-phone").forEach((el) => {
+      el.textContent = phone;
+      el.href = tel;
     });
 
+    const emailRow = document.getElementById("contact-email-row");
     const emailEl = document.getElementById("contact-email");
-    if (emailEl) {
+    if (emailEl && email) {
       emailEl.textContent = email;
       emailEl.href = `mailto:${email}`;
+    } else if (emailRow) {
+      emailRow.style.display = "none";
     }
 
     const areaEl = document.getElementById("service-area-text");
@@ -81,17 +86,26 @@
             return;
           }
         } catch (_) {
-          /* fall through to mailto */
+          /* fall through */
         }
       }
 
+      const phoneDigits = (cfg.phone || "").replace(/\D/g, "").slice(-10);
       const subject = encodeURIComponent(
         `Estimate request: ${payload.project || "project"} — ${payload.town || "NH"}`
       );
       const body = encodeURIComponent(
         `Name: ${payload.name}\nPhone: ${payload.phone}\nEmail: ${payload.email || ""}\nTown: ${payload.town || ""}\nProject: ${payload.project}\n\n${payload.message}`
       );
-      window.location.href = `mailto:${cfg.email || "hello@example.com"}?subject=${subject}&body=${body}`;
+
+      if (cfg.email) {
+        window.location.href = `mailto:${cfg.email}?subject=${subject}&body=${body}`;
+      } else if (phoneDigits.length === 10) {
+        window.location.href = `sms:+1${phoneDigits}?body=${body}`;
+      } else if (success) {
+        form.reset();
+        success.style.display = "block";
+      }
     });
   }
 

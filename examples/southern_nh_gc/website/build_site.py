@@ -13,11 +13,28 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
-SITE_URL = "https://southernnhconstruction.com"  # keep in sync with site-config.js
+BIZ: dict = json.loads((DATA / "business.json").read_text(encoding="utf-8"))
+SITE_URL = BIZ["siteUrl"].rstrip("/")
+BUSINESS_NAME = BIZ["businessName"]
+LOGO_SHORT = BIZ.get("logoShort") or BUSINESS_NAME
 
 
 def load_json(name: str) -> list | dict:
     return json.loads((DATA / name).read_text(encoding="utf-8"))
+
+
+def phone_tel() -> str:
+    digits = "".join(c for c in BIZ.get("phone", "") if c.isdigit())[-10:]
+    return f"tel:+1{digits}" if len(digits) == 10 else "tel:"
+
+
+def write_site_config() -> None:
+    lines = [
+        "/** Auto-generated from data/business.json — edit that file, then run build_site.py */",
+        "window.SITE_CONFIG = " + json.dumps(BIZ, indent=2) + ";",
+        "",
+    ]
+    write(ROOT / "site-config.js", "\n".join(lines))
 
 
 def rel(depth: int, path: str) -> str:
@@ -49,7 +66,7 @@ def page_shell(
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a href="{assets}index.html" class="logo" id="logo-text">Southern NH <span>Construction</span></a>
+      <a href="{assets}index.html" class="logo" id="logo-text">{LOGO_SHORT}</a>
       <nav class="nav" id="main-nav">
         <a href="{assets}decks/">Decks</a>
         <a href="{assets}garages/">Garages</a>
@@ -69,7 +86,7 @@ def page_shell(
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <span id="footer-copy">© {date.today().year} Southern NH Construction. All rights reserved.</span>
+      <span id="footer-copy">© {date.today().year} {BUSINESS_NAME}. All rights reserved.</span>
       <span><a href="{assets}locations/">Service areas</a> · <a href="{assets}guides/">Guides</a></span>
     </div>
   </footer>
@@ -89,7 +106,7 @@ def cta_block(depth: int, headline: str = "Get a free estimate") -> str:
         <p>Written quote with scope of work — we respond within one business day.</p>
         <div class="hero-actions" style="justify-content:center">
           <a href="{a}index.html#contact" class="btn btn-primary">Request Estimate</a>
-          <a href="tel:+16035550123" class="btn btn-secondary" id="hero-phone">Call Now</a>
+          <a href="{phone_tel()}" class="btn btn-secondary" id="hero-phone">Call {BIZ.get("phone", "Now")}</a>
         </div>
       </div>
     </section>"""
@@ -212,7 +229,7 @@ def build_service_pages() -> list[str]:
 {cta_block(depth)}
 """
         page_seo = {
-            "title": f"{svc['title']} | Southern NH Construction",
+            "title": f"{svc['title']} | {BUSINESS_NAME}",
             "description": svc["description"],
             "canonical": canonical,
             "breadcrumbs": [
@@ -260,7 +277,7 @@ def build_location_pages() -> list[str]:
             depth=depth,
             body=index_body,
             page_seo={
-                "title": "Service Areas — Southern NH Construction",
+                "title": f"Service Areas — {BUSINESS_NAME}",
                 "description": "Deck builder, garage builder, and home addition contractor serving Nashua, Manchester, Merrimack, Bedford, and southern NH.",
                 "canonical": f"{SITE_URL}/locations/",
                 "breadcrumbs": [
@@ -320,7 +337,7 @@ def build_location_pages() -> list[str]:
 {cta_block(depth, f"Free estimate in {name}")}
 """
         page_seo = {
-            "title": f"Deck & Garage Builder {name} NH | Southern NH Construction",
+            "title": f"Deck & Garage Builder {name} NH | {BUSINESS_NAME}",
             "description": f"Licensed contractor in {name}, NH. Decks, garages, and home additions. Permits included. Free estimates.",
             "canonical": canonical,
             "breadcrumbs": [
@@ -332,7 +349,7 @@ def build_location_pages() -> list[str]:
                 "@context": "https://schema.org",
                 "@type": "Service",
                 "name": f"Deck and garage construction in {name}, NH",
-                "provider": {"@type": "GeneralContractor", "name": "Southern NH Construction"},
+                "provider": {"@type": "GeneralContractor", "name": BUSINESS_NAME},
                 "areaServed": {"@type": "City", "name": name, "containedInPlace": "New Hampshire"},
             },
         }
@@ -444,7 +461,7 @@ def build_guides() -> list[str]:
 {cta_block(depth)}
 """,
             page_seo={
-                "title": "Guides — Southern NH Construction",
+                "title": f"Guides — {BUSINESS_NAME}",
                 "description": "Deck cost, garage permits, and home improvement guides for southern New Hampshire homeowners.",
                 "canonical": f"{SITE_URL}/guides/",
             },
@@ -476,7 +493,7 @@ def build_guides() -> list[str]:
                 depth=depth,
                 body=body,
                 page_seo={
-                    "title": f"{g['title']} | Southern NH Construction",
+                    "title": f"{g['title']} | {BUSINESS_NAME}",
                     "description": g["description"],
                     "canonical": canonical,
                     "ogType": "article",
@@ -485,7 +502,7 @@ def build_guides() -> list[str]:
                         "@type": "Article",
                         "headline": g["title"],
                         "description": g["description"],
-                        "author": {"@type": "Organization", "name": "Southern NH Construction"},
+                        "author": {"@type": "Organization", "name": BUSINESS_NAME},
                     },
                 },
             ),
@@ -515,13 +532,26 @@ def build_sitemap(urls: list[str]) -> None:
     )
 
 
+def build_robots() -> None:
+    write(
+        ROOT / "robots.txt",
+        f"""User-agent: *
+Allow: /
+
+Sitemap: {SITE_URL}/sitemap.xml
+""",
+    )
+
+
 def main() -> None:
-    print("Building SEO pages…")
+    print(f"Building SEO pages for {BUSINESS_NAME}…")
+    write_site_config()
     urls = [f"{SITE_URL}/"]
     urls.extend(build_service_pages())
     urls.extend(build_location_pages())
     urls.extend(build_guides())
     build_sitemap(urls)
+    build_robots()
     print(f"Done — {len(urls)} URLs in sitemap.")
 
 

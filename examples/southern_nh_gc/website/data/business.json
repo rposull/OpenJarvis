@@ -1,8 +1,7 @@
-/** Auto-generated from data/business.json — edit that file, then run build_site.py */
-window.SITE_CONFIG = {
+{
   "businessName": "O'Sullivan Construction & Property Management",
   "logoShort": "O'Sullivan Construction",
-  "tagline": "Decks \u00b7 Garages \u00b7 Home Additions \u00b7 Property Management",
+  "tagline": "Decks · Garages · Home Additions · Property Management",
   "phone": "(978) 888-8068",
   "email": "",
   "siteUrl": "https://osullivanconstructionpm.com",
@@ -12,4 +11,4 @@ window.SITE_CONFIG = {
   "plausibleDomain": "",
   "licenseNumber": "",
   "foundingYear": 2020
-};
+}

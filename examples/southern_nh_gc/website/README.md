@@ -15,8 +15,8 @@ SEO-focused static site for your general contracting business. Built to rank for
 
 ## Quick start
 
-1. Edit **`site-config.js`** — business name, phone, email, `siteUrl`, analytics IDs.
-2. Regenerate pages after changing towns:
+1. Edit **`data/business.json`** — business name, phone, email, domain, analytics.
+2. Regenerate pages after any change:
 
    ```bash
    cd examples/southern_nh_gc/website
@@ -102,7 +102,8 @@ Set `ga4Id` in `site-config.js`. Watch:
 
 | File | Purpose |
 |------|---------|
-| `site-config.js` | Business details, domain, analytics, Formspree |
+| `data/business.json` | **Single source of truth** — name, phone, domain (regenerates site-config.js) |
+| `site-config.js` | Auto-generated from business.json — do not edit by hand |
 | `data/towns.json` | Town landing page content — add more towns here |
 | `build_site.py` | Regenerates town/service/guide pages + sitemap |
 | `index.html` | Homepage copy |
