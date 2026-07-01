@@ -41,7 +41,7 @@ After activation, the form redirects back to your site with a success message.
 
 ## Deploy (free) — business URL
 
-**Target URL:** https://osullivan-construction.netlify.app
+**Target URL:** https://oconstructpm.netlify.app
 
 See **`DEPLOY.md`** for step-by-step Netlify setup (takes ~5 minutes).
 

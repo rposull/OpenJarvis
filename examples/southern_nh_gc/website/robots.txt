@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://osullivan-construction.netlify.app/sitemap.xml
+Sitemap: https://oconstructpm.netlify.app/sitemap.xml

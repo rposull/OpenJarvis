@@ -2,7 +2,7 @@
 
 Your branded site URL:
 
-**https://osullivan-construction.netlify.app**
+**https://oconstructpm.netlify.app**
 
 (Random preview links like `trycloudflare.com` cannot be renamed — deploy once to Netlify to get this permanent name.)
 
@@ -16,14 +16,14 @@ Your branded site URL:
    - **Build command:** `python3 build_site.py`
    - **Publish directory:** `examples/southern_nh_gc/website`
 5. Click **Deploy site**.
-6. After deploy: **Site configuration** → **Domain management** → **Options** → change site name to **`osullivan-construction`**.
-7. Your live URL is now **https://osullivan-construction.netlify.app**
+6. After deploy: **Site configuration** → **Domain management** → **Options** → change site name to **`oconstructpm`**.
+7. Your live URL is now **https://oconstructpm.netlify.app**
 
 ## Custom domain later (optional)
 
-When you buy **osullivanconstructionpm.com**:
+When you buy **oconstructpm.com**:
 
-1. Netlify → **Domain management** → **Add domain** → enter `osullivanconstructionpm.com`
+1. Netlify → **Domain management** → **Add domain** → enter `oconstructpm.com`
 2. Point DNS at your registrar to Netlify (they show you the records)
 3. Update `customDomain` in `data/business.json`, run `python3 build_site.py`, redeploy
 
