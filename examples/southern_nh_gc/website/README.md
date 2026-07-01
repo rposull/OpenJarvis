@@ -1,55 +1,121 @@
-# Southern NH GC — Business Website
+# Southern NH GC — Traffic-Ready Website
 
-Static marketing site for your general contracting business (decks, garages, additions).
+SEO-focused static site for your general contracting business. Built to rank for local searches like **"deck builder Nashua NH"** and capture leads into your OpenJarvis workflow.
+
+## What's included
+
+| Layer | Purpose |
+|-------|---------|
+| **Homepage** | Hero, services, process, town links, guides, contact form |
+| **Service pages** | `/decks/`, `/garages/`, `/additions/` — target trade keywords |
+| **Town pages** | 10 southern NH towns — target "contractor in [town]" searches |
+| **Guides** | 3 articles — deck cost, garage permits, deck vs patio |
+| **SEO** | Schema.org, Open Graph, sitemap, robots.txt, canonical URLs |
+| **Analytics** | GA4 and Plausible hooks in `site-config.js` |
 
 ## Quick start
 
-1. Edit **`site-config.js`** with your business name, phone, and email.
-2. Open locally:
+1. Edit **`site-config.js`** — business name, phone, email, `siteUrl`, analytics IDs.
+2. Regenerate pages after changing towns:
 
    ```bash
    cd examples/southern_nh_gc/website
+   python3 build_site.py
+   ```
+
+3. Preview locally:
+
+   ```bash
    python3 -m http.server 8080
    ```
 
    Visit http://localhost:8080
 
-## Contact form
-
-**Option A — Formspree (recommended, free tier)**
-
-1. Sign up at https://formspree.io
-2. Create a form and copy your form ID
-3. Set `formspreeId: "your_id"` in `site-config.js`
-
-**Option B — mailto fallback**
-
-Leave `formspreeId` empty. Submitting opens the visitor's email client with a pre-filled message.
-
 ## Deploy (free)
 
-**Netlify / Vercel**
+**Netlify (recommended)**
 
-- Drag the `website/` folder into the dashboard, or connect your GitHub repo with root directory `examples/southern_nh_gc/website`.
+1. Connect repo with publish directory `examples/southern_nh_gc/website`
+2. Build command: `python3 build_site.py` (already in `netlify.toml`)
+3. Add your custom domain and set `siteUrl` in `site-config.js`
 
-**GitHub Pages**
+**Vercel / Cloudflare Pages**
 
-```bash
-# From repo root — push website folder to gh-pages branch or use Actions
-```
+Same folder, same build command.
 
-**Any web host**
+## Get traffic — action checklist
 
-Upload all files in `website/` to your `public_html` or static bucket.
+The site is the foundation. Traffic comes from doing these steps after deploy:
+
+### 1. Google Business Profile (highest ROI)
+
+- Claim your listing at https://business.google.com
+- Category: **General Contractor** + **Deck Builder**
+- Service areas: every town in `data/towns.json`
+- Add 10+ photos (before/after, crew, trucks)
+- Link website to your live domain
+- Ask every happy customer for a Google review
+
+### 2. Submit to Google Search Console
+
+1. Verify domain ownership
+2. Submit `sitemap.xml` (e.g. `https://yoursite.com/sitemap.xml`)
+3. Request indexing for homepage + top 3 town pages
+
+### 3. Local citations (NAP consistency)
+
+List your **exact** name, address, phone on:
+
+- Yelp, Angi, HomeAdvisor, BBB
+- Facebook Business Page
+- NH contractor directories
+
+Use the same phone and business name everywhere — Google matches citations.
+
+### 4. Content that compounds
+
+- Add one guide per month (`guides/` — edit `build_site.py` or add HTML)
+- Post project photos on Google Business with town names in captions
+- Add towns to `data/towns.json` and re-run `build_site.py`
+
+### 5. Connect leads to automation
+
+**Formspree → your phone**
+
+1. Sign up at https://formspree.io
+2. Set `formspreeId` in `site-config.js`
+3. Enable email notifications + optional webhook to Zapier/Make
+
+**Formspree → OpenJarvis** (advanced)
+
+Wire Formspree webhook to a small endpoint that creates leads for `lead_scan.py` / `follow_up.py`.
+
+### 6. Track what works
+
+Set `ga4Id` in `site-config.js`. Watch:
+
+- Which town pages get traffic (Search Console → Pages)
+- Contact form submissions
+- Phone calls (use a tracking number or ask "how did you find us?")
 
 ## Customize
 
 | File | Purpose |
 |------|---------|
-| `site-config.js` | Business name, phone, email, service area |
-| `index.html` | Page structure and copy |
+| `site-config.js` | Business details, domain, analytics, Formspree |
+| `data/towns.json` | Town landing page content — add more towns here |
+| `build_site.py` | Regenerates town/service/guide pages + sitemap |
+| `index.html` | Homepage copy |
 | `styles.css` | Colors and layout |
 
-## Connect to lead automation
+## Page count
 
-Quote requests from the form can later feed into `lead_scan.py` / your CRM by wiring Formspree webhooks to a small endpoint or Zapier.
+After `build_site.py`:
+
+- 1 homepage
+- 3 service pages
+- 11 location pages (index + 10 towns)
+- 4 guide pages (index + 3 articles)
+- **19 URLs** in sitemap
+
+Add more towns → more indexed pages → more local search surface area.

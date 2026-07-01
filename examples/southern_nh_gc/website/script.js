@@ -8,7 +8,9 @@
     const email = cfg.email || "hello@example.com";
     const area = cfg.serviceArea || "Southern New Hampshire and surrounding towns.";
 
-    document.title = `${name} — ${tagline}`;
+    if (!window.PAGE_SEO?.title) {
+      document.title = `${name} — ${tagline}`;
+    }
 
     const logo = document.getElementById("logo-text");
     if (logo) {

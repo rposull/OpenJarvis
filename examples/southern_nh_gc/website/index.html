@@ -3,18 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Licensed general contractor in southern New Hampshire. Custom decks, garages, and home additions. Free estimates.">
   <title>Southern NH Construction — Decks, Garages &amp; Additions</title>
   <link rel="stylesheet" href="styles.css">
+  <script>
+    window.PAGE_SEO = {
+      title: "Southern NH Construction — Deck Builder, Garages & Home Additions",
+      description: "Licensed general contractor in southern New Hampshire. Custom decks, garages, and home additions in Nashua, Manchester, Merrimack & more. Free estimates.",
+      canonical: "https://southernnhconstruction.com/",
+    };
+  </script>
+  <script src="site-config.js"></script>
+  <script src="seo.js"></script>
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a href="#" class="logo" id="logo-text">Southern NH <span>Construction</span></a>
+      <a href="index.html" class="logo" id="logo-text">Southern NH <span>Construction</span></a>
       <nav class="nav" id="main-nav">
-        <a href="#services">Services</a>
-        <a href="#process">Process</a>
-        <a href="#area">Service Area</a>
+        <a href="decks/">Decks</a>
+        <a href="garages/">Garages</a>
+        <a href="additions/">Additions</a>
+        <a href="locations/">Service Areas</a>
+        <a href="guides/">Guides</a>
         <a href="#contact" class="nav-cta">Free Estimate</a>
       </nav>
       <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
@@ -39,9 +49,9 @@
         <div class="hero-card">
           <h3>What we build</h3>
           <ul>
-            <li>Custom decks — pressure-treated &amp; composite</li>
-            <li>Detached &amp; attached garages</li>
-            <li>Room additions &amp; bump-outs</li>
+            <li><a href="decks/">Custom decks</a> — pressure-treated &amp; composite</li>
+            <li><a href="garages/">Detached &amp; attached garages</a></li>
+            <li><a href="additions/">Room additions &amp; bump-outs</a></li>
             <li>Permits, inspections &amp; code-compliant work</li>
           </ul>
         </div>
@@ -52,29 +62,32 @@
       <div class="container">
         <div class="section-title">
           <h2>Our Services</h2>
-          <p>Focused on the projects homeowners need most — done right, start to finish.</p>
+          <p>Focused on the projects homeowners search for most — done right, start to finish.</p>
         </div>
         <div class="services-grid">
           <article class="service-card">
             <div class="service-icon">🏡</div>
-            <h3>Decks</h3>
+            <h3><a href="decks/">Decks</a></h3>
             <p>New decks, rebuilds, and upgrades. Footings, framing, decking, railing, and stairs — all permitted and inspected to NH code.</p>
+            <a href="decks/" class="card-link">Deck builder details →</a>
           </article>
           <article class="service-card">
             <div class="service-icon">🚗</div>
-            <h3>Garages</h3>
+            <h3><a href="garages/">Garages</a></h3>
             <p>Detached and attached garages with slab, framing, roof, siding, and openings. Sized for your vehicles and storage needs.</p>
+            <a href="garages/" class="card-link">Garage builder details →</a>
           </article>
           <article class="service-card">
             <div class="service-icon">➕</div>
-            <h3>Home Additions</h3>
+            <h3><a href="additions/">Home Additions</a></h3>
             <p>Single-story additions tied into your existing home. Foundation, envelope, and shell work with a clear scope before we start.</p>
+            <a href="additions/" class="card-link">Addition contractor details →</a>
           </article>
         </div>
       </div>
     </section>
 
-    <section id="process" style="background: #fff;">
+    <section id="process" class="section-alt">
       <div class="container">
         <div class="section-title">
           <h2>How It Works</h2>
@@ -112,6 +125,47 @@
           <p id="service-area-text">
             Nashua, Manchester, Merrimack, Bedford, Londonderry, Derry, Salem, Hudson, Pelham, Windham, and surrounding towns.
           </p>
+          <p style="margin-top:1.25rem">
+            <a href="locations/" class="btn btn-secondary" style="color:#fff;border-color:#64748b">View all service areas</a>
+          </p>
+        </div>
+        <div class="town-links">
+          <a href="locations/nashua.html">Nashua</a>
+          <a href="locations/manchester.html">Manchester</a>
+          <a href="locations/merrimack.html">Merrimack</a>
+          <a href="locations/bedford.html">Bedford</a>
+          <a href="locations/londonderry.html">Londonderry</a>
+          <a href="locations/derry.html">Derry</a>
+          <a href="locations/salem.html">Salem</a>
+          <a href="locations/hudson.html">Hudson</a>
+          <a href="locations/pelham.html">Pelham</a>
+          <a href="locations/windham.html">Windham</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="guides-preview" class="section-alt">
+      <div class="container">
+        <div class="section-title">
+          <h2>Helpful Guides</h2>
+          <p>Answers to the questions southern NH homeowners ask before hiring a contractor.</p>
+        </div>
+        <div class="guide-grid">
+          <a class="guide-card" href="guides/deck-cost-southern-nh.html">
+            <h3>How much does a deck cost in southern NH?</h3>
+            <p>Typical price per square foot, what affects your quote, and how to budget.</p>
+            <span class="card-link">Read guide →</span>
+          </a>
+          <a class="guide-card" href="guides/garage-building-permit-nh.html">
+            <h3>Garage building permits in NH</h3>
+            <p>Setbacks, frost walls, and what your town inspector checks.</p>
+            <span class="card-link">Read guide →</span>
+          </a>
+          <a class="guide-card" href="guides/deck-vs-patio-nh.html">
+            <h3>Deck vs patio in New Hampshire</h3>
+            <p>Which option fits your yard, budget, and NH winters.</p>
+            <span class="card-link">Read guide →</span>
+          </a>
         </div>
       </div>
     </section>
@@ -172,11 +226,14 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <span id="footer-copy">© 2026 Southern NH Construction. All rights reserved.</span>
-      <span>Decks · Garages · Additions · Southern NH</span>
+      <span>
+        <a href="locations/">Service areas</a> ·
+        <a href="guides/">Guides</a> ·
+        Decks · Garages · Additions
+      </span>
     </div>
   </footer>
 
-  <script src="site-config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
