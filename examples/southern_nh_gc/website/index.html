@@ -184,7 +184,10 @@
             <span><strong>Email:</strong> <a href="mailto:rposull@hotmail.com" id="contact-email">rposull@hotmail.com</a></span>
           </div>
         </div>
-        <form id="quote-form">
+        <form id="quote-form" method="POST" action="https://formsubmit.co/rposull@hotmail.com">
+          <input type="hidden" name="_captcha" value="false">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_subject" value="New estimate request">
           <div class="form-row">
             <label for="name">Name *</label>
             <input type="text" id="name" name="name" required autocomplete="name">

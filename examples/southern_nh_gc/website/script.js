@@ -63,34 +63,29 @@
     });
   }
 
-  async function submitToFormspree(payload) {
-    const res = await fetch(`https://formspree.io/f/${cfg.formspreeId}`, {
-      method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return res.ok;
+  function ensureHidden(form, name, value) {
+    let el = form.querySelector(`input[type="hidden"][name="${name}"]`);
+    if (!el) {
+      el = document.createElement("input");
+      el.type = "hidden";
+      el.name = name;
+      form.appendChild(el);
+    }
+    el.value = value;
   }
 
-  async function submitToFormSubmit(payload) {
-    const to = cfg.email;
-    if (!to) return false;
+  function showSentConfirmation() {
+    const success = document.getElementById("form-success");
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("sent") !== "1") return;
 
-    const body = {
-      ...payload,
-      _subject: `Estimate request: ${payload.project || "project"} — ${payload.town || "NH"}`,
-      _template: "table",
-      _captcha: "false",
-    };
+    if (success) success.style.display = "block";
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
 
-    const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
-      method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    return data.success === "true" || data.success === true;
+    params.delete("sent");
+    const qs = params.toString();
+    const clean = `${window.location.pathname}${qs ? `?${qs}` : ""}#contact`;
+    history.replaceState({}, "", clean);
   }
 
   function setupForm() {
@@ -100,47 +95,86 @@
     const submitBtn = document.getElementById("form-submit-btn");
     if (!form) return;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (success) success.style.display = "none";
-      if (error) error.style.display = "none";
+    showSentConfirmation();
 
-      const data = new FormData(form);
-      if (data.get("_honey")) return;
+    if (cfg.formspreeId) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (success) success.style.display = "none";
+        if (error) error.style.display = "none";
 
-      const payload = Object.fromEntries(
-        [...data.entries()].filter(([key]) => !key.startsWith("_"))
-      );
+        const data = new FormData(form);
+        if (data.get("_honey")) return;
 
-      const originalLabel = submitBtn ? submitBtn.textContent : "";
+        const payload = Object.fromEntries(
+          [...data.entries()].filter(([key]) => !key.startsWith("_"))
+        );
+
+        const originalLabel = submitBtn ? submitBtn.textContent : "";
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Sending…";
+        }
+
+        try {
+          const res = await fetch(`https://formspree.io/f/${cfg.formspreeId}`, {
+            method: "POST",
+            headers: { Accept: "application/json", "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            form.reset();
+            if (success) success.style.display = "block";
+            return;
+          }
+        } catch (_) {
+          /* fall through */
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalLabel;
+          }
+        }
+        if (error) error.style.display = "block";
+      });
+      return;
+    }
+
+    if (!cfg.email) return;
+
+    // Native POST to FormSubmit — reliable in Safari (no AJAX/CORS issues).
+    // Do NOT encodeURIComponent the email; FormSubmit expects a literal @ in the URL.
+    form.method = "POST";
+    form.action = `https://formsubmit.co/${cfg.email}`;
+
+    const returnUrl = `${window.location.origin}${window.location.pathname}?sent=1#contact`;
+    ensureHidden(form, "_next", returnUrl);
+    ensureHidden(form, "_captcha", "false");
+    ensureHidden(form, "_template", "table");
+    ensureHidden(form, "_subject", "New estimate request");
+
+    form.addEventListener("submit", (e) => {
+      const honey = form.querySelector('input[name="_honey"]');
+      if (honey && honey.value) {
+        e.preventDefault();
+        return;
+      }
+
+      const project = form.querySelector('[name="project"]')?.value || "project";
+      const town = form.querySelector('[name="town"]')?.value || "NH";
+      const subj = form.querySelector('input[name="_subject"]');
+      if (subj) subj.value = `Estimate request: ${project} — ${town}`;
+
+      const visitorEmail = form.querySelector('[name="email"]')?.value?.trim();
+      if (visitorEmail) {
+        ensureHidden(form, "_replyto", visitorEmail);
+      }
+
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.textContent = "Sending…";
       }
-
-      try {
-        let sent = false;
-        if (cfg.formspreeId) {
-          sent = await submitToFormspree(payload);
-        } else if (cfg.email) {
-          sent = await submitToFormSubmit(payload);
-        }
-
-        if (sent) {
-          form.reset();
-          if (success) success.style.display = "block";
-          return;
-        }
-      } catch (_) {
-        /* show error below */
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalLabel;
-        }
-      }
-
-      if (error) error.style.display = "block";
+      // Allow native form navigation to FormSubmit → redirect back via _next
     });
   }
 

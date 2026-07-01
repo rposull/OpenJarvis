@@ -33,11 +33,11 @@ SEO-focused static site for your general contracting business. Built to rank for
 
 ## Contact form → your inbox
 
-Submissions go **directly to the email in `data/business.json`** via [FormSubmit](https://formsubmit.co) (free, no account needed).
+Submissions POST directly to **rposull@hotmail.com** via [FormSubmit](https://formsubmit.co) (native form — works in Safari).
 
-**One-time setup after deploy:** submit a test request on your live site. FormSubmit emails you an activation link — click it once and all future leads arrive in your inbox.
+**One-time setup:** after first live submission, check your inbox for a FormSubmit **activation link** and click it. Until then, submissions may not arrive.
 
-Optional override: set `formspreeId` in `business.json` if you prefer Formspree instead.
+After activation, the form redirects back to your site with a success message.
 
 ## Deploy (free)
 
