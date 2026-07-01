@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "nashua",
+    "name": "Nashua",
+    "county": "Hillsborough",
+    "blurb": "Nashua homeowners often add decks for summer entertaining and detached garages for extra storage. We pull city permits and coordinate inspections with Nashua building officials."
+  },
+  {
+    "slug": "manchester",
+    "name": "Manchester",
+    "county": "Hillsborough",
+    "blurb": "From the North End to the West Side, we build code-compliant decks, garages, and additions that match Manchester's mix of older homes and newer subdivisions."
+  },
+  {
+    "slug": "merrimack",
+    "name": "Merrimack",
+    "county": "Hillsborough",
+    "blurb": "Merrimack's established neighborhoods are ideal for deck rebuilds and room additions. We work with your HOA requirements when applicable."
+  },
+  {
+    "slug": "bedford",
+    "name": "Bedford",
+    "county": "Hillsborough",
+    "blurb": "Bedford projects often call for larger decks and custom garages. We provide detailed written scopes before breaking ground."
+  },
+  {
+    "slug": "londonderry",
+    "name": "Londonderry",
+    "county": "Rockingham",
+    "blurb": "Londonderry homeowners trust us for permitted deck and garage work with clear timelines from quote to final walkthrough."
+  },
+  {
+    "slug": "derry",
+    "name": "Derry",
+    "county": "Rockingham",
+    "blurb": "We serve Derry with the same transparent quoting process used across southern NH — materials, labor, and scope spelled out upfront."
+  },
+  {
+    "slug": "salem",
+    "name": "Salem",
+    "county": "Rockingham",
+    "blurb": "Salem's lakeside properties and suburban lots both benefit from quality outdoor living spaces and functional garage builds."
+  },
+  {
+    "slug": "hudson",
+    "name": "Hudson",
+    "county": "Hillsborough",
+    "blurb": "Hudson homeowners choose us for composite and pressure-treated decks, plus slab-on-grade garages sized for NH winters."
+  },
+  {
+    "slug": "pelham",
+    "name": "Pelham",
+    "county": "Hillsborough",
+    "blurb": "Pelham projects get full permit support and inspections handled — you focus on the finished space, not the paperwork."
+  },
+  {
+    "slug": "windham",
+    "name": "Windham",
+    "county": "Rockingham",
+    "blurb": "Windham's larger lots are perfect for detached garages and wrap-around decks. Free on-site estimates available."
+  }
+]
