@@ -37,13 +37,25 @@ WIDTH_FT = 22
 DEPTH_FT = 8
 SQFT = WIDTH_FT * DEPTH_FT
 CUSTOMER_RATE_SQFT = 145.0
+MATERIALS_LUMP = 14000.0
 FOOTINGS_LUMP = 2200.0
-MATERIALS_RATE_SQFT = 62.50  # $11,000 — lumber, roof, deck, rail, ceiling (footings separate)
-LABOR_RATE_SQFT = 70.0
+LABOR_LUMP = SQFT * CUSTOMER_RATE_SQFT - MATERIALS_LUMP - FOOTINGS_LUMP  # $9,320
 
 
 def porch_quote_items() -> list[LineItem]:
     return [
+        LineItem(
+            description=(
+                f"Covered porch — materials ({WIDTH_FT}×{DEPTH_FT} ft, {SQFT} sq ft): "
+                "PT framing lumber and posts, composite decking and fascia, hidden fasteners, "
+                "composite railing kits, 6×6 column wraps, roof sheathing, ice & water "
+                "shield, synthetic underlayment, drip edge, step flashing, architectural "
+                "shingles, beadboard/vinyl ceiling and trim, structural hardware"
+            ),
+            quantity=1,
+            unit="lump sum",
+            unit_cost=MATERIALS_LUMP,
+        ),
         LineItem(
             description=(
                 "Footings and concrete: (3) pier footings below local frost depth, "
@@ -55,27 +67,15 @@ def porch_quote_items() -> list[LineItem]:
         ),
         LineItem(
             description=(
-                f"Covered porch — materials ({WIDTH_FT}×{DEPTH_FT} ft, {SQFT} sq ft): "
-                "PT framing lumber and posts, composite decking and fascia, hidden fasteners, "
-                "composite railing kits, 6×6 column wraps, roof sheathing, ice & water "
-                "shield, synthetic underlayment, drip edge, step flashing, architectural "
-                "shingles, beadboard/vinyl ceiling and trim, structural hardware"
-            ),
-            quantity=SQFT,
-            unit="sqft",
-            unit_cost=MATERIALS_RATE_SQFT,
-        ),
-        LineItem(
-            description=(
                 f"Covered porch — labor ({WIDTH_FT}×{DEPTH_FT} ft, {SQFT} sq ft): "
                 "layout, set posts, deck framing and ledger, roof framing "
                 "and sheathing, roofing install, composite deck and fascia, railing, "
                 "column wraps, ceiling finish, permit coordination, inspections, "
                 "supervision, site protection, and cleanup"
             ),
-            quantity=SQFT,
-            unit="sqft",
-            unit_cost=LABOR_RATE_SQFT,
+            quantity=1,
+            unit="lump sum",
+            unit_cost=LABOR_LUMP,
         ),
     ]
 
@@ -129,9 +129,9 @@ def main() -> None:
 
     html_path, pdf_path = render_and_save(html, f"{args.out}.html")
     print(f"Quote total: ${totals['total']:,.2f} (${CUSTOMER_RATE_SQFT:.2f}/sqft)")
-    print(f"  Footings:  ${items[0].total:,.2f}")
-    print(f"  Materials: ${items[1].total:,.2f} (${MATERIALS_RATE_SQFT:.2f}/sqft)")
-    print(f"  Labor:     ${items[2].total:,.2f} (${LABOR_RATE_SQFT:.2f}/sqft)")
+    print(f"  Materials: ${items[0].total:,.2f}")
+    print(f"  Footings:  ${items[1].total:,.2f}")
+    print(f"  Labor:     ${items[2].total:,.2f}")
     print(f"HTML: {html_path}")
     if pdf_path:
         print(f"PDF:  {pdf_path}")
