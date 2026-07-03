@@ -38,9 +38,17 @@ Outputs CSV files in `results/`:
 - `strategy_summary_*.csv` — average performance per strategy
 - `top_combos_*.csv` — best Sharpe combinations
 
-## Caveats
+## Hedge-fund options book (regime strategy)
 
-- **Daily bars only** — intraday strategies (true ORB) are approximated.
+Simulates the **3-sleeve** approach (income / directional / tail) using daily SPY, QQQ, IWM + VIX.  
+No historical options chains — uses **options P&L proxies** (variance premium, spread delta, put convexity).
+
+```bash
+python3 examples/trading_backtest/backtest_hf_options.py --years 5
+```
+
+**Important:** Results are illustrative. Daily proxies cannot replicate real gamma, skew, earnings, or liquidity. Do not trade live from this alone.
+
 - **Long-only** on single assets; pairs strategy simplified.
 - **No slippage model** beyond 0.1% commission per position change.
 - **Past performance ≠ future results.** Paper-trade before risking capital.
