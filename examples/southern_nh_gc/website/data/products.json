@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "permit-checklist",
+    "title": "Southern NH Deck & Garage Permit Checklist",
+    "tagline": "Know what your town needs before you apply — avoid delays and surprise fees.",
+    "price": 19,
+    "priceLabel": "$19",
+    "description": "Step-by-step permit checklist for southern New Hampshire homeowners planning a deck or garage. Covers plot plans, setbacks, frost depth, electrical, inspection order, and questions to ask your building department.",
+    "bullets": [
+      "Pre-application checklist for decks and detached garages",
+      "Southern NH frost depth and setback reminders",
+      "Documents to gather before your first trip to town hall",
+      "Inspection sequence — what gets signed off when",
+      "Red flags that delay permits (and how to avoid them)"
+    ],
+    "gumroadKey": "permitChecklistUrl",
+    "pdfFile": "deck-garage-permit-checklist.md",
+    "sampleSection": "What towns typically require"
+  },
+  {
+    "slug": "quote-guide",
+    "title": "How to Read a Contractor Quote",
+    "tagline": "Spot missing scope, compare apples to apples, and know what you're paying for.",
+    "price": 9,
+    "priceLabel": "$9",
+    "description": "Plain-English guide for homeowners reviewing deck, garage, and addition quotes. Learn what should be in scope, how line items work, and which gaps cost you later.",
+    "bullets": [
+      "What a complete quote should include (scope, exclusions, timeline)",
+      "Materials vs labor lines — when each format makes sense",
+      "Permits, change orders, and deposits — fair terms",
+      "10 questions to ask before you sign",
+      "Side-by-side comparison worksheet"
+    ],
+    "gumroadKey": "quoteGuideUrl",
+    "pdfFile": "how-to-read-contractor-quote.md",
+    "sampleSection": "Red flags in a quote"
+  }
+]

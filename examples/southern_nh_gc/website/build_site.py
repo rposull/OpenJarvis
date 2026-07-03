@@ -74,6 +74,7 @@ def page_shell(
         <a href="{assets}additions/">Additions</a>
         <a href="{assets}locations/">Service Areas</a>
         <a href="{assets}guides/">Guides</a>
+        <a href="{assets}shop/">Guides &amp; Downloads</a>
         <a href="{assets}index.html#contact" class="nav-cta">Free Estimate</a>
         {nav_extra}
       </nav>
@@ -88,7 +89,7 @@ def page_shell(
   <footer class="site-footer">
     <div class="container footer-inner">
       <span id="footer-copy">© {date.today().year} {BUSINESS_NAME}. All rights reserved.</span>
-      <span><a href="{assets}locations/">Service areas</a> · <a href="{assets}guides/">Guides</a></span>
+      <span><a href="{assets}locations/">Service areas</a> · <a href="{assets}guides/">Guides</a> · <a href="{assets}shop/">Downloads</a></span>
     </div>
   </footer>
 
@@ -458,6 +459,9 @@ def build_guides() -> list[str]:
       <div class="container guide-grid">
 {cards}
       </div>
+      <p class="shop-free-note" style="margin-top:2rem">
+        Want printable checklists? <a href="{rel(depth, "shop/")}">Shop downloads</a> — permit checklist ($19) and quote review guide ($9).
+      </p>
     </section>
 {cta_block(depth)}
 """,
@@ -533,6 +537,138 @@ def build_sitemap(urls: list[str]) -> None:
     )
 
 
+def product_buy_button(depth: int, product: dict, gumroad_url: str) -> str:
+    """Checkout button — Gumroad overlay when URL set, else mailto fallback."""
+    if gumroad_url.strip():
+        return f"""        <a class="btn btn-primary gumroad-button" href="{gumroad_url}" data-gumroad-overlay-checkout="true">
+          Buy now — {product["priceLabel"]}
+        </a>"""
+    email = BIZ.get("email", "")
+    subject = product["title"].replace(" ", "%20")
+    return f"""        <a class="btn btn-primary" href="mailto:{email}?subject={subject}%20purchase">
+          Email to purchase — {product["priceLabel"]}
+        </a>
+        <p class="product-setup-note">Add your Gumroad link in <code>data/business.json</code> for instant automated delivery.</p>"""
+
+
+def build_shop() -> list[str]:
+    urls: list[str] = []
+    products = load_json("products.json")
+    digital = BIZ.get("digitalProducts") or {}
+    depth = 1
+
+    cards = []
+    for p in products:
+        url_key = p.get("gumroadKey", "")
+        buy_url = digital.get(url_key, "") if url_key else ""
+        cards.append(
+            f"""        <a class="product-card" href="{p["slug"]}.html">
+          <span class="product-price">{p["priceLabel"]}</span>
+          <h3>{p["title"]}</h3>
+          <p>{p["tagline"]}</p>
+          <span class="card-link">View details →</span>
+        </a>"""
+        )
+    cards_html = "\n".join(cards)
+
+    index_body = f"""
+    <section class="page-hero">
+      <div class="container">
+        {breadcrumbs_html([("Home", rel(depth, "index.html")), ("Guides & Downloads", "")])}
+        <h1>Homeowner guides &amp; downloads</h1>
+        <p class="lead">Instant PDF guides for southern NH homeowners — plus free articles. Automated delivery when you connect Gumroad.</p>
+      </div>
+    </section>
+    <section>
+      <div class="container">
+        <div class="product-grid">
+{cards_html}
+        </div>
+        <p class="shop-free-note">Free articles: <a href="{rel(depth, "guides/")}">browse all guides</a>. Need a contractor? <a href="{rel(depth, "index.html")}#contact">Get a free estimate</a>.</p>
+      </div>
+    </section>
+{cta_block(depth, "Rather hire it out?")}
+"""
+    write(
+        ROOT / "shop" / "index.html",
+        page_shell(
+            depth=depth,
+            body=index_body,
+            page_seo={
+                "title": f"Guides & Downloads — {BUSINESS_NAME}",
+                "description": "Southern NH homeowner guides: deck & garage permit checklist and how to read a contractor quote. Instant PDF download.",
+                "canonical": f"{SITE_URL}/shop/",
+            },
+        ),
+    )
+    urls.append(f"{SITE_URL}/shop/")
+
+    for p in products:
+        slug = p["slug"]
+        url_key = p.get("gumroadKey", "")
+        buy_url = digital.get(url_key, "") if url_key else ""
+        bullets = "\n".join(f"            <li>{b}</li>" for b in p["bullets"])
+        buy_btn = product_buy_button(depth, p, buy_url)
+        canonical = f"{SITE_URL}/shop/{slug}.html"
+        body = f"""
+    <section class="page-hero">
+      <div class="container">
+        {breadcrumbs_html([
+            ("Home", rel(depth, "index.html")),
+            ("Guides & Downloads", rel(depth, "shop/index.html")),
+            (p["title"][:36] + "…" if len(p["title"]) > 36 else p["title"], ""),
+        ])}
+        <span class="product-price-hero">{p["priceLabel"]}</span>
+        <h1>{p["title"]}</h1>
+        <p class="lead">{p["tagline"]}</p>
+      </div>
+    </section>
+    <section>
+      <div class="container content-narrow">
+        <p>{p["description"]}</p>
+        <h2>What's inside</h2>
+        <ul class="check-list">
+{bullets}
+        </ul>
+        <div class="product-buy-box">
+{buy_btn}
+          <p class="product-delivery">Instant PDF download after purchase. Keep a copy for your permit visit or quote review.</p>
+        </div>
+        <p>Related: <a href="{rel(depth, "guides/")}">free guides</a> · <a href="{rel(depth, "index.html")}#contact">free contractor estimate</a></p>
+      </div>
+    </section>
+{cta_block(depth)}
+"""
+        page_seo = {
+            "title": f"{p['title']} — {p['priceLabel']} | {BUSINESS_NAME}",
+            "description": p["description"],
+            "canonical": canonical,
+            "jsonLd": {
+                "@context": "https://schema.org",
+                "@type": "Product",
+                "name": p["title"],
+                "description": p["description"],
+                "offers": {
+                    "@type": "Offer",
+                    "price": str(p["price"]),
+                    "priceCurrency": "USD",
+                    "availability": "https://schema.org/InStock",
+                },
+            },
+        }
+        html = page_shell(depth=depth, body=body, page_seo=page_seo)
+        if digital.get("provider") == "gumroad" and any(
+            digital.get(k, "").strip() for k in ("permitChecklistUrl", "quoteGuideUrl", "bundleUrl")
+        ):
+            html = html.replace(
+                "</body>",
+                '  <script src="https://gumroad.com/js/gumroad.js"></script>\n</body>',
+            )
+        write(ROOT / "shop" / f"{slug}.html", html)
+        urls.append(canonical)
+    return urls
+
+
 def patch_index_html() -> None:
     path = ROOT / "index.html"
     html = path.read_text(encoding="utf-8")
@@ -546,9 +682,10 @@ def patch_index_html() -> None:
     )
     if 'name="_next"' in html:
         html = re.sub(
-            r'<input type="hidden" name="_next" value="[^"]*">',
+            r'<input type="hidden" name="_next" value="[^"]*"[^>]*>',
             f'<input type="hidden" name="_next" value="{thanks}">',
             html,
+            flags=re.DOTALL,
         )
     else:
         html = html.replace(
@@ -562,6 +699,24 @@ def patch_index_html() -> None:
         f'canonical: "{SITE_URL}/"',
         html,
     )
+
+    lead = BIZ.get("leadAlerts") or {}
+    if lead.get("enabled") and lead.get("webhookPath"):
+        webhook = f"{SITE_URL}{lead['webhookPath']}"
+        if 'name="_webhook"' in html:
+            html = re.sub(
+                r'<input type="hidden" name="_webhook" value="[^"]*">',
+                f'<input type="hidden" name="_webhook" value="{webhook}">',
+                html,
+            )
+        else:
+            html = html.replace(
+                '<input type="hidden" name="_captcha" value="false">',
+                f'<input type="hidden" name="_captcha" value="false">\n'
+                f'          <input type="hidden" name="_webhook" value="{webhook}">',
+                1,
+            )
+
     write(path, html)
 
 
@@ -596,6 +751,7 @@ def main() -> None:
     urls.extend(build_service_pages())
     urls.extend(build_location_pages())
     urls.extend(build_guides())
+    urls.extend(build_shop())
     build_sitemap(urls)
     build_robots()
     print(f"Done — {len(urls)} URLs in sitemap.")

@@ -45,6 +45,8 @@ After activation, the form redirects back to your site with a success message.
 
 See **`DEPLOY.md`** for step-by-step Netlify setup (takes ~5 minutes).
 
+**Automated income (leads + digital products):** see **`INCOME_AUTOMATION.md`**.
+
 **GitHub Pages** (alternative): enable at https://github.com/rposull/OpenJarvis/settings/pages → source **GitHub Actions**.
 
 ## Get traffic — action checklist

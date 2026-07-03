@@ -2,6 +2,9 @@
   publish = "."
   command = "python3 build_site.py"
 
+[functions]
+  directory = "netlify/functions"
+
 [[redirects]]
   from = "/index.html"
   to = "/"

@@ -14,5 +14,15 @@ window.SITE_CONFIG = {
   "ga4Id": "",
   "plausibleDomain": "",
   "licenseNumber": "",
-  "foundingYear": 2020
+  "foundingYear": 2020,
+  "leadAlerts": {
+    "enabled": true,
+    "webhookPath": "/.netlify/functions/form-alert"
+  },
+  "digitalProducts": {
+    "provider": "gumroad",
+    "permitChecklistUrl": "",
+    "quoteGuideUrl": "",
+    "bundleUrl": ""
+  }
 };

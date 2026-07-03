@@ -25,6 +25,7 @@
         <a href="additions/">Additions</a>
         <a href="locations/">Service Areas</a>
         <a href="guides/">Guides</a>
+        <a href="shop/">Guides &amp; Downloads</a>
         <a href="#contact" class="nav-cta">Free Estimate</a>
       </nav>
       <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
@@ -170,6 +171,32 @@
       </div>
     </section>
 
+    <section id="shop-preview">
+      <div class="container">
+        <div class="section-title">
+          <h2>Homeowner downloads</h2>
+          <p>Instant PDF guides — permit checklists and quote review. Automated delivery after purchase.</p>
+        </div>
+        <div class="product-grid">
+          <a class="product-card" href="shop/permit-checklist.html">
+            <span class="product-price">$19</span>
+            <h3>Southern NH Deck &amp; Garage Permit Checklist</h3>
+            <p>Know what your town needs before you apply.</p>
+            <span class="card-link">View details →</span>
+          </a>
+          <a class="product-card" href="shop/quote-guide.html">
+            <span class="product-price">$9</span>
+            <h3>How to Read a Contractor Quote</h3>
+            <p>Spot missing scope and compare bids fairly.</p>
+            <span class="card-link">View details →</span>
+          </a>
+        </div>
+        <p style="text-align:center;margin-top:1.5rem">
+          <a href="shop/" class="btn btn-secondary">All downloads</a>
+        </p>
+      </div>
+    </section>
+
     <section id="contact">
       <div class="container contact-grid">
         <div class="contact-info">
@@ -188,9 +215,9 @@
           id="quote-form"
           method="POST"
           action="https://formsubmit.co/rposull@hotmail.com">
-          <input type="hidden" name="_next" value="https://osullivan-construction.netlify.app/thanks.html"
-        >
+          <input type="hidden" name="_next" value="https://oconstructpm.netlify.app/thanks.html">
           <input type="hidden" name="_captcha" value="false">
+          <input type="hidden" name="_webhook" value="https://oconstructpm.netlify.app/.netlify/functions/form-alert">
           <input type="hidden" name="_template" value="table">
           <input type="hidden" name="_subject" value="New estimate request — O'Sullivan Construction">
           <div class="form-row">
@@ -237,6 +264,7 @@
       <span>
         <a href="locations/">Service areas</a> ·
         <a href="guides/">Guides</a> ·
+        <a href="shop/">Downloads</a> ·
         Decks · Garages · Additions
       </span>
     </div>
