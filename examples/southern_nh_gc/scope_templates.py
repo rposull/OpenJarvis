@@ -196,6 +196,7 @@ def covered_porch_scope(
     town: str = "",
     decking: str = "composite decking with hidden fasteners",
     railing: str = "composite railing system",
+    footings_allowance: float = 2200.0,
 ) -> str:
     """Detailed scope for a covered porch — deck, roof, ceiling, columns."""
     days = max(_days_for(sqft), 12)
@@ -210,7 +211,7 @@ Permits and inspections:
 - Schedule inspections for footings, framing, roofing, and final as required by town
 
 Foundation and posts:
-- Install concrete footings below local frost depth for porch posts
+- Install concrete footings below local frost depth for porch posts (allowance {footings_allowance:,.0f})
 - Set (3) pressure-treated 6×6 posts plumb and to elevation
 - Install post bases, anchors, and approved hardware
 
