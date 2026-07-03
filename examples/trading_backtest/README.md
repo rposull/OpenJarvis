@@ -49,6 +49,17 @@ python3 examples/trading_backtest/backtest_hf_options.py --years 5
 
 **Important:** Results are illustrative. Daily proxies cannot replicate real gamma, skew, earnings, or liquidity. Do not trade live from this alone.
 
+## SPY 45 DTE options (Greeks + paper trading)
+
+```bash
+cd examples/trading_backtest/options
+python3 paper_trade.py propose ic --symbol SPY   # live chain → paper journal
+python3 paper_trade.py status
+python3 backtest_ic.py --years 5                 # historical iron condor backtest
+```
+
+See `options/README.md` for Polygon/ORATS API keys and structure rules.
+
 - **Long-only** on single assets; pairs strategy simplified.
 - **No slippage model** beyond 0.1% commission per position change.
 - **Past performance ≠ future results.** Paper-trade before risking capital.
