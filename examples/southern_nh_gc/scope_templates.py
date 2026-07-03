@@ -179,8 +179,69 @@ def default_timeline(sqft: float, job_type: str = "deck") -> str:
         days = max(days, 14)
     elif job_type == "addition":
         days = max(days, 21)
+    elif job_type in ("covered porch", "porch"):
+        days = max(days, 12)
     return (
         f"Approximately {days} working days on site ({REFERENCE_CREW_DAYS} days "
         f"reference for a 144 sq ft deck). Weather, permits, and material "
         f"lead times may adjust start/finish."
     )
+
+
+def covered_porch_scope(
+    *,
+    sqft: float,
+    width_ft: float = 22,
+    depth_ft: float = 8,
+    town: str = "",
+    decking: str = "composite decking with hidden fasteners",
+    railing: str = "composite railing system",
+) -> str:
+    """Detailed scope for a covered porch — deck, roof, ceiling, columns."""
+    days = max(_days_for(sqft), 12)
+    loc = f" in {town}" if town else ""
+    footprint = f"{width_ft:g} ft × {depth_ft:g} ft ({sqft:g} sq ft)"
+    return f"""Project overview:
+- Furnish all labor, materials, and supervision to build a {footprint} covered porch{loc}
+- Work performed per applicable NH building codes and local amendments
+
+Permits and inspections:
+- Assist with building permit application and required drawings
+- Schedule inspections for footings, framing, roofing, and final as required by town
+
+Foundation and posts:
+- Install concrete footings below local frost depth for porch posts
+- Set (3) pressure-treated 6×6 posts plumb and to elevation
+- Install post bases, anchors, and approved hardware
+
+Deck structure and framing:
+- Attach ledger to existing structure with flashing and waterproofing at house connection
+- Install pressure-treated 2×10 beams, rim boards, blocking, and joists per span requirements
+- Install approved joist hangers, hurricane ties, and structural fasteners (not shown on material takeoff)
+
+Roof structure:
+- Frame roof with 2×10 headers, rafters, and 2×6 ceiling ties per plan
+- Install 1/2\" roof sheathing and structural connections at house tie-in
+
+Roofing:
+- Install ice and water shield at eaves and critical transitions
+- Install synthetic underlayment over sheathing
+- Install drip edge, step flashing at house wall, and architectural shingles
+- Tie roof drainage into existing gutters only if specified in writing
+
+Decking and rail:
+- Install {decking} on framed deck surface
+- Install composite fascia at exposed edges
+- Install {railing} at open sides per code (guard height and spacing)
+
+Columns and ceiling:
+- Install 6×6 column wrap kits at structural posts
+- Install beadboard or vinyl ceiling finish with J-channel and F-channel trim
+
+Cleanup and closeout:
+- Daily jobsite cleanup; haul off construction debris
+- Final walkthrough with homeowner
+- Provide care instructions for composite and roof finishes
+
+Estimated timeline:
+- Approximately {days} working days on site, weather permitting"""
