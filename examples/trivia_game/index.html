@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trivia Crossing — Ages 16–70</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #07141f;
+      --deep: #0c2436;
+      --sea: #134e5e;
+      --foam: #e8f4f2;
+      --gold: #e2b857;
+      --gold-deep: #c4922a;
+      --coral: #e07a5f;
+      --mint: #3ecf8e;
+      --muted: rgba(232, 244, 242, 0.68);
+      --line: rgba(232, 244, 242, 0.14);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "Sora", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font-body);
+      color: var(--foam);
+      background: var(--ink);
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(226, 184, 87, 0.18), transparent 55%),
+        radial-gradient(900px 600px at 95% 10%, rgba(19, 78, 94, 0.55), transparent 50%),
+        radial-gradient(800px 500px at 50% 110%, rgba(224, 122, 95, 0.16), transparent 45%),
+        linear-gradient(165deg, #07141f 0%, #0c2436 48%, #102a28 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(232, 244, 242, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 244, 242, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black 30%, transparent 85%);
+    }
+
+    .app {
+      position: relative;
+      width: min(720px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2.5rem 0 3.5rem;
+      min-height: 100vh;
+      display: grid;
+      align-content: center;
+    }
+
+    .screen { display: none; animation: rise 0.55s ease both; }
+    .screen.active { display: grid; gap: 1.5rem; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(226, 184, 87, 0.25); }
+      50% { box-shadow: 0 0 0 14px rgba(226, 184, 87, 0); }
+    }
+
+    @keyframes tick {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+
+    .brand {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 9vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin: 0;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--gold);
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 34ch;
+      font-size: 1.05rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(7, 20, 31, 0.35);
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 0.95rem 1.4rem;
+      transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: #1a1203;
+      animation: pulse-glow 2.8s ease-in-out infinite;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--foam);
+      border: 1px solid var(--line);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: rgba(7, 20, 31, 0.55);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .setup-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    label {
+      display: grid;
+      gap: 0.45rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    select {
+      font: inherit;
+      color: var(--foam);
+      background: rgba(12, 36, 54, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.8rem 0.9rem;
+    }
+
+    .progress {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .timer-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(232, 244, 242, 0.1);
+      overflow: hidden;
+    }
+
+    .timer-bar {
+      height: 100%;
+      width: 100%;
+      transform-origin: left center;
+      background: linear-gradient(90deg, var(--mint), var(--gold));
+    }
+
+    .timer-bar.running {
+      animation: tick linear forwards;
+    }
+
+    .category {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
+      color: var(--gold);
+      margin: 0;
+    }
+
+    .question {
+      font-family: var(--font-display);
+      font-size: clamp(1.45rem, 4vw, 2rem);
+      line-height: 1.25;
+      margin: 0.35rem 0 0;
+    }
+
+    .choices {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .choice {
+      text-align: left;
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(12, 36, 54, 0.65);
+      color: var(--foam);
+      border-radius: 14px;
+      padding: 0.95rem 1rem;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+
+    .choice:hover:not(:disabled) {
+      border-color: rgba(226, 184, 87, 0.55);
+      transform: translateX(3px);
+    }
+
+    .choice:disabled { cursor: default; }
+
+    .choice.correct {
+      border-color: rgba(62, 207, 142, 0.8);
+      background: rgba(62, 207, 142, 0.16);
+    }
+
+    .choice.wrong {
+      border-color: rgba(224, 122, 95, 0.8);
+      background: rgba(224, 122, 95, 0.16);
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 1rem 0.5rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(7, 20, 31, 0.4);
+    }
+
+    .stat strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      color: var(--gold);
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .result-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 6vw, 3rem);
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .footnote {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 560px) {
+      .app { width: min(100% - 1.25rem, 720px); padding-top: 1.5rem; }
+      .scoreboard { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      .actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="start" class="screen active">
+      <p class="chip" style="width:fit-content">Ages 16–70 · 110 questions</p>
+      <h1 class="brand">Trivia<br /><span>Crossing</span></h1>
+      <p class="lede">One round. Ten categories. Questions that teens, parents, and grandparents can all argue about.</p>
+      <div class="panel setup-grid">
+        <label>
+          Round length
+          <select id="round-size">
+            <option value="10">10 questions</option>
+            <option value="15" selected>15 questions</option>
+            <option value="25">25 questions</option>
+          </select>
+        </label>
+        <label>
+          Difficulty mix
+          <select id="difficulty">
+            <option value="mixed" selected>Mixed (recommended)</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+        <label>
+          Category
+          <select id="category">
+            <option value="all" selected>All categories</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="start-btn" type="button">Start round</button>
+        <button class="btn btn-secondary" id="browse-btn" type="button">Browse question bank</button>
+      </div>
+    </section>
+
+    <section id="play" class="screen">
+      <div class="progress">
+        <span id="q-progress">Question 1 / 15</span>
+        <span id="q-score">Score: 0</span>
+      </div>
+      <div class="timer-track"><div class="timer-bar" id="timer-bar"></div></div>
+      <div class="panel">
+        <p class="category" id="q-category">History</p>
+        <h2 class="question" id="q-text">Question text</h2>
+      </div>
+      <div class="choices" id="choices"></div>
+    </section>
+
+    <section id="results" class="screen">
+      <h2 class="result-title" id="result-title">Nice round.</h2>
+      <p class="lede" id="result-blurb">You crossed generations without breaking a sweat.</p>
+      <div class="scoreboard">
+        <div class="stat"><strong id="stat-score">0</strong><span>correct</span></div>
+        <div class="stat"><strong id="stat-total">0</strong><span>asked</span></div>
+        <div class="stat"><strong id="stat-pct">0%</strong><span>accuracy</span></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="replay-btn" type="button">Play again</button>
+        <button class="btn btn-secondary" id="home-btn" type="button">Back to start</button>
+      </div>
+    </section>
+
+    <section id="browse" class="screen">
+      <h2 class="result-title">Question bank</h2>
+      <p class="lede">110 multiple-choice questions spanning eras and topics for ages 16–70.</p>
+      <div class="panel" id="bank-list" style="max-height:60vh; overflow:auto; display:grid; gap:1rem;"></div>
+      <div class="actions">
+        <button class="btn btn-secondary" id="browse-back" type="button">Back</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const TIMER_SECONDS = 20;
+    let allQuestions = [];
+    let round = [];
+    let index = 0;
+    let score = 0;
+    let timerId = null;
+
+    const screens = {
+      start: document.getElementById("start"),
+      play: document.getElementById("play"),
+      results: document.getElementById("results"),
+      browse: document.getElementById("browse"),
+    };
+
+    function show(name) {
+      Object.entries(screens).forEach(([key, el]) => {
+        el.classList.toggle("active", key === name);
+      });
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function populateCategories() {
+      const select = document.getElementById("category");
+      const cats = [...new Set(allQuestions.map((q) => q.category))].sort();
+      cats.forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    function buildRound() {
+      const size = Number(document.getElementById("round-size").value);
+      const difficulty = document.getElementById("difficulty").value;
+      const category = document.getElementById("category").value;
+
+      let pool = allQuestions;
+      if (category !== "all") pool = pool.filter((q) => q.category === category);
+      if (difficulty !== "mixed") pool = pool.filter((q) => q.difficulty === difficulty);
+      if (pool.length === 0) pool = allQuestions;
+
+      round = shuffle(pool).slice(0, Math.min(size, pool.length));
+      index = 0;
+      score = 0;
+    }
+
+    function clearTimer() {
+      if (timerId) {
+        clearTimeout(timerId);
+        timerId = null;
+      }
+      const bar = document.getElementById("timer-bar");
+      bar.classList.remove("running");
+      bar.style.animationDuration = "";
+    }
+
+    function startTimer() {
+      clearTimer();
+      const bar = document.getElementById("timer-bar");
+      void bar.offsetWidth;
+      bar.style.animationDuration = `${TIMER_SECONDS}s`;
+      bar.classList.add("running");
+      timerId = setTimeout(() => lockAnswer(null), TIMER_SECONDS * 1000);
+    }
+
+    function renderQuestion() {
+      const q = round[index];
+      document.getElementById("q-progress").textContent = `Question ${index + 1} / ${round.length}`;
+      document.getElementById("q-score").textContent = `Score: ${score}`;
+      document.getElementById("q-category").textContent = `${q.category} · ${q.difficulty}`;
+      document.getElementById("q-text").textContent = q.question;
+
+      const box = document.getElementById("choices");
+      box.innerHTML = "";
+      q.choices.forEach((choice, i) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.type = "button";
+        btn.textContent = choice;
+        btn.addEventListener("click", () => lockAnswer(i));
+        box.appendChild(btn);
+      });
+      startTimer();
+    }
+
+    function lockAnswer(selected) {
+      clearTimer();
+      const q = round[index];
+      const buttons = [...document.querySelectorAll(".choice")];
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.answer) btn.classList.add("correct");
+        if (selected !== null && i === selected && selected !== q.answer) btn.classList.add("wrong");
+      });
+      if (selected === q.answer) score += 1;
+      document.getElementById("q-score").textContent = `Score: ${score}`;
+
+      setTimeout(() => {
+        index += 1;
+        if (index >= round.length) finishRound();
+        else renderQuestion();
+      }, 900);
+    }
+
+    function finishRound() {
+      const pct = Math.round((score / round.length) * 100);
+      let title = "Solid showing.";
+      let blurb = "You held your own across eras and topics.";
+      if (pct >= 90) {
+        title = "Trivia titan.";
+        blurb = "That score works at any kitchen table from 16 to 70.";
+      } else if (pct >= 70) {
+        title = "Strong round.";
+        blurb = "Enough right answers to brag, enough misses to rematch.";
+      } else if (pct < 40) {
+        title = "Rough crossing.";
+        blurb = "The next round is waiting. Mix categories and try again.";
+      }
+
+      document.getElementById("result-title").textContent = title;
+      document.getElementById("result-blurb").textContent = blurb;
+      document.getElementById("stat-score").textContent = String(score);
+      document.getElementById("stat-total").textContent = String(round.length);
+      document.getElementById("stat-pct").textContent = `${pct}%`;
+      show("results");
+    }
+
+    function renderBank() {
+      const list = document.getElementById("bank-list");
+      list.innerHTML = allQuestions.map((q, i) => `
+        <article>
+          <p class="category">${i + 1}. ${q.category} · ${q.difficulty}</p>
+          <p style="margin:0.35rem 0 0.5rem; font-weight:600;">${q.question}</p>
+          <p class="footnote">Answer: ${q.choices[q.answer]}</p>
+        </article>
+      `).join("");
+    }
+
+    async function loadQuestions() {
+      const res = await fetch("./questions.json");
+      if (!res.ok) throw new Error("Could not load questions.json");
+      const data = await res.json();
+      allQuestions = data.questions || [];
+      if (!allQuestions.length) throw new Error("Question bank is empty");
+      populateCategories();
+      renderBank();
+    }
+
+    document.getElementById("start-btn").addEventListener("click", () => {
+      buildRound();
+      show("play");
+      renderQuestion();
+    });
+    document.getElementById("replay-btn").addEventListener("click", () => {
+      buildRound();
+      show("play");
+      renderQuestion();
+    });
+    document.getElementById("home-btn").addEventListener("click", () => show("start"));
+    document.getElementById("browse-btn").addEventListener("click", () => show("browse"));
+    document.getElementById("browse-back").addEventListener("click", () => show("start"));
+
+    loadQuestions().catch((err) => {
+      document.querySelector(".lede").textContent = `Failed to load questions: ${err.message}. Serve this folder over HTTP so questions.json can load.`;
+      document.getElementById("start-btn").disabled = true;
+    });
+  </script>
+</body>
+</html>
