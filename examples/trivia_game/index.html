@@ -313,9 +313,9 @@
 <body>
   <main class="app">
     <section id="start" class="screen active">
-      <p class="chip" style="width:fit-content">Ages 16–70 · 110 questions</p>
+      <p class="chip" style="width:fit-content">Ages 16–70 · difficulty 4–10</p>
       <h1 class="brand">Trivia<br /><span>Crossing</span></h1>
-      <p class="lede">One round. Ten categories. Questions that teens, parents, and grandparents can all argue about.</p>
+      <p class="lede">Medium-to-challenging rounds. No softballs — every question is rated 4 through 10.</p>
       <div class="panel setup-grid">
         <label>
           Round length
@@ -326,12 +326,12 @@
           </select>
         </label>
         <label>
-          Difficulty mix
+          Difficulty band
           <select id="difficulty">
-            <option value="mixed" selected>Mixed (recommended)</option>
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
+            <option value="mixed" selected>All 4–10 (mixed)</option>
+            <option value="4-6">4–6 medium</option>
+            <option value="7-8">7–8 tough</option>
+            <option value="9-10">9–10 deep cuts</option>
           </select>
         </label>
         <label>
@@ -376,7 +376,7 @@
 
     <section id="browse" class="screen">
       <h2 class="result-title">Question bank</h2>
-      <p class="lede">110 multiple-choice questions spanning eras and topics for ages 16–70.</p>
+      <p class="lede">Medium-level bank rated 4–10 across eras and topics for ages 16–70.</p>
       <div class="panel" id="bank-list" style="max-height:60vh; overflow:auto; display:grid; gap:1rem;"></div>
       <div class="actions">
         <button class="btn btn-secondary" id="browse-back" type="button">Back</button>
@@ -432,7 +432,10 @@
 
       let pool = allQuestions;
       if (category !== "all") pool = pool.filter((q) => q.category === category);
-      if (difficulty !== "mixed") pool = pool.filter((q) => q.difficulty === difficulty);
+      if (difficulty !== "mixed") {
+        const [lo, hi] = difficulty.split("-").map(Number);
+        pool = pool.filter((q) => q.difficulty >= lo && q.difficulty <= hi);
+      }
       if (pool.length === 0) pool = allQuestions;
 
       round = shuffle(pool).slice(0, Math.min(size, pool.length));
@@ -463,7 +466,7 @@
       const q = round[index];
       document.getElementById("q-progress").textContent = `Question ${index + 1} / ${round.length}`;
       document.getElementById("q-score").textContent = `Score: ${score}`;
-      document.getElementById("q-category").textContent = `${q.category} · ${q.difficulty}`;
+      document.getElementById("q-category").textContent = `${q.category} · difficulty ${q.difficulty}/10`;
       document.getElementById("q-text").textContent = q.question;
 
       const box = document.getElementById("choices");
@@ -525,7 +528,7 @@
       const list = document.getElementById("bank-list");
       list.innerHTML = allQuestions.map((q, i) => `
         <article>
-          <p class="category">${i + 1}. ${q.category} · ${q.difficulty}</p>
+          <p class="category">${i + 1}. ${q.category} · difficulty ${q.difficulty}/10</p>
           <p style="margin:0.35rem 0 0.5rem; font-weight:600;">${q.question}</p>
           <p class="footnote">Answer: ${q.choices[q.answer]}</p>
         </article>

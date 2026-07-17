@@ -2,7 +2,12 @@
   "meta": {
     "title": "Cross-Generational Trivia",
     "audience": "ages 16–70",
-    "description": "Multiple-choice trivia spanning history, science, pop culture, sports, geography, and everyday knowledge that teens through grandparents can enjoy together.",
+    "description": "Medium-to-challenging multiple-choice trivia (difficulty 4–10) spanning eras and topics teens through grandparents can play together.",
+    "difficulty_scale": {
+      "min": 4,
+      "max": 10,
+      "note": "1–3 omitted on purpose. 4–6 = solid medium, 7–8 = tough, 9–10 = deep cuts."
+    },
     "format": {
       "choices": 4,
       "fields": ["id", "category", "difficulty", "question", "choices", "answer", "era_note"]
@@ -24,997 +29,1117 @@
     {
       "id": "h01",
       "category": "History",
-      "difficulty": "easy",
-      "question": "In which year did the United States declare independence?",
-      "choices": ["1776", "1789", "1812", "1492"],
+      "difficulty": 5,
+      "question": "Which treaty formally ended World War I in 1919?",
+      "choices": ["Treaty of Versailles", "Treaty of Ghent", "Treaty of Paris", "Treaty of Trianon"],
       "answer": 0,
-      "era_note": "classic school fact"
+      "era_note": "early 20th century"
     },
     {
       "id": "h02",
       "category": "History",
-      "difficulty": "easy",
-      "question": "Who was the first person to walk on the Moon?",
-      "choices": ["Buzz Aldrin", "Yuri Gagarin", "Neil Armstrong", "John Glenn"],
-      "answer": 2,
-      "era_note": "1969 landmark"
-    },
-    {
-      "id": "h03",
-      "category": "History",
-      "difficulty": "medium",
-      "question": "The Berlin Wall fell in which year?",
-      "choices": ["1985", "1989", "1991", "1995"],
-      "answer": 1,
-      "era_note": "late Cold War"
-    },
-    {
-      "id": "h04",
-      "category": "History",
-      "difficulty": "medium",
-      "question": "Which ancient wonder was located in Alexandria, Egypt?",
-      "choices": ["The Colossus of Rhodes", "The Hanging Gardens", "The Lighthouse (Pharos)", "The Temple of Artemis"],
+      "difficulty": 6,
+      "question": "Who was the last pharaoh of ancient Egypt?",
+      "choices": ["Nefertiti", "Hatshepsut", "Cleopatra VII", "Ramesses II"],
       "answer": 2,
       "era_note": "ancient world"
     },
     {
+      "id": "h03",
+      "category": "History",
+      "difficulty": 7,
+      "question": "The Opium Wars were primarily fought between China and which country?",
+      "choices": ["France", "Britain", "Japan", "Portugal"],
+      "answer": 1,
+      "era_note": "19th century"
+    },
+    {
+      "id": "h04",
+      "category": "History",
+      "difficulty": 5,
+      "question": "Which U.S. amendment abolished slavery?",
+      "choices": ["13th", "14th", "15th", "19th"],
+      "answer": 0,
+      "era_note": "Civil War era"
+    },
+    {
       "id": "h05",
       "category": "History",
-      "difficulty": "hard",
-      "question": "Who was the British prime minister at the start of World War II in 1939?",
-      "choices": ["Winston Churchill", "Neville Chamberlain", "Clement Attlee", "Anthony Eden"],
+      "difficulty": 8,
+      "question": "In which year did the Byzantine Empire fall with the capture of Constantinople?",
+      "choices": ["1204", "1453", "1492", "1529"],
       "answer": 1,
-      "era_note": "WWII era"
+      "era_note": "medieval / early modern"
     },
     {
       "id": "h06",
       "category": "History",
-      "difficulty": "medium",
-      "question": "The Magna Carta was signed in which country?",
-      "choices": ["France", "England", "Spain", "Italy"],
-      "answer": 1,
-      "era_note": "medieval Europe"
+      "difficulty": 6,
+      "question": "Who led the Soviet Union during most of World War II?",
+      "choices": ["Vladimir Lenin", "Leon Trotsky", "Joseph Stalin", "Nikita Khrushchev"],
+      "answer": 2,
+      "era_note": "WWII"
     },
     {
       "id": "h07",
       "category": "History",
-      "difficulty": "easy",
-      "question": "Which ocean liner sank after hitting an iceberg in 1912?",
-      "choices": ["Lusitania", "Queen Mary", "Titanic", "Britannic"],
+      "difficulty": 7,
+      "question": "The Meiji Restoration transformed which country in the late 19th century?",
+      "choices": ["China", "Korea", "Japan", "Thailand"],
       "answer": 2,
-      "era_note": "early 20th century"
+      "era_note": "19th century Asia"
     },
     {
       "id": "h08",
       "category": "History",
-      "difficulty": "hard",
-      "question": "Which U.S. president purchased the Louisiana Territory from France?",
-      "choices": ["George Washington", "Thomas Jefferson", "James Madison", "Andrew Jackson"],
+      "difficulty": 4,
+      "question": "Which explorer's crew completed the first circumnavigation of the globe?",
+      "choices": ["Christopher Columbus", "Ferdinand Magellan", "Vasco da Gama", "James Cook"],
       "answer": 1,
-      "era_note": "early republic"
+      "era_note": "Age of Exploration"
     },
     {
       "id": "h09",
       "category": "History",
-      "difficulty": "medium",
-      "question": "What was the name of the ship that carried the Pilgrims to North America in 1620?",
-      "choices": ["Santa Maria", "Mayflower", "Beagle", "Endeavour"],
+      "difficulty": 8,
+      "question": "Which ancient law code is associated with a Babylonian king around 1750 BCE?",
+      "choices": ["Twelve Tables", "Code of Hammurabi", "Justinian Code", "Draconian Code"],
       "answer": 1,
-      "era_note": "colonial America"
+      "era_note": "ancient Near East"
     },
     {
       "id": "h10",
       "category": "History",
-      "difficulty": "easy",
-      "question": "Which empire built Machu Picchu?",
-      "choices": ["Aztec", "Maya", "Inca", "Olmec"],
+      "difficulty": 6,
+      "question": "What was the name of the ship on which Charles Darwin sailed during his research voyage?",
+      "choices": ["Endeavour", "Beagle", "Discovery", "Victory"],
+      "answer": 1,
+      "era_note": "19th century science history"
+    },
+    {
+      "id": "h11",
+      "category": "History",
+      "difficulty": 9,
+      "question": "Which dynasty reunified China after the Period of Disunity and preceded the Tang?",
+      "choices": ["Han", "Song", "Sui", "Yuan"],
       "answer": 2,
-      "era_note": "pre-Columbian Americas"
+      "era_note": "imperial China"
     },
     {
       "id": "s01",
       "category": "Science & Nature",
-      "difficulty": "easy",
-      "question": "What planet is known as the Red Planet?",
-      "choices": ["Venus", "Mars", "Jupiter", "Mercury"],
-      "answer": 1,
-      "era_note": "evergreen science"
+      "difficulty": 5,
+      "question": "What is the most abundant gas in Earth's atmosphere?",
+      "choices": ["Oxygen", "Carbon dioxide", "Nitrogen", "Argon"],
+      "answer": 2,
+      "era_note": "earth science"
     },
     {
       "id": "s02",
       "category": "Science & Nature",
-      "difficulty": "easy",
-      "question": "What gas do plants primarily absorb for photosynthesis?",
-      "choices": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
-      "answer": 2,
-      "era_note": "evergreen science"
+      "difficulty": 6,
+      "question": "Which blood type is considered the universal donor for red blood cells?",
+      "choices": ["AB+", "O−", "A−", "B+"],
+      "answer": 1,
+      "era_note": "biology"
     },
     {
       "id": "s03",
       "category": "Science & Nature",
-      "difficulty": "medium",
-      "question": "What is the chemical symbol for gold?",
-      "choices": ["Go", "Gd", "Au", "Ag"],
+      "difficulty": 7,
+      "question": "What is the SI unit of electric resistance?",
+      "choices": ["Volt", "Ampere", "Ohm", "Watt"],
       "answer": 2,
-      "era_note": "evergreen science"
+      "era_note": "physics"
     },
     {
       "id": "s04",
       "category": "Science & Nature",
-      "difficulty": "medium",
-      "question": "How many bones are in the adult human body?",
-      "choices": ["186", "206", "256", "300"],
+      "difficulty": 5,
+      "question": "DNA is primarily stored in which organelle of eukaryotic cells?",
+      "choices": ["Mitochondrion", "Nucleus", "Ribosome", "Lysosome"],
       "answer": 1,
-      "era_note": "evergreen science"
+      "era_note": "biology"
     },
     {
       "id": "s05",
       "category": "Science & Nature",
-      "difficulty": "hard",
-      "question": "What particle is exchanged in electromagnetic interactions?",
-      "choices": ["Gluon", "Photon", "Neutrino", "Higgs boson"],
-      "answer": 1,
-      "era_note": "physics depth"
+      "difficulty": 8,
+      "question": "Which element has the atomic number 26?",
+      "choices": ["Nickel", "Cobalt", "Iron", "Copper"],
+      "answer": 2,
+      "era_note": "chemistry"
     },
     {
       "id": "s06",
       "category": "Science & Nature",
-      "difficulty": "easy",
-      "question": "Which animal is known as the 'King of the Jungle'?",
-      "choices": ["Tiger", "Lion", "Elephant", "Gorilla"],
-      "answer": 1,
-      "era_note": "evergreen nature"
+      "difficulty": 6,
+      "question": "What type of rock is formed from cooled magma or lava?",
+      "choices": ["Sedimentary", "Metamorphic", "Igneous", "Conglomerate"],
+      "answer": 2,
+      "era_note": "geology"
     },
     {
       "id": "s07",
       "category": "Science & Nature",
-      "difficulty": "medium",
-      "question": "What is the hardest natural substance on Earth?",
-      "choices": ["Quartz", "Topaz", "Diamond", "Ruby"],
-      "answer": 2,
-      "era_note": "evergreen science"
+      "difficulty": 7,
+      "question": "Approximately how long does light from the Sun take to reach Earth?",
+      "choices": ["8 seconds", "8 minutes", "8 hours", "8 days"],
+      "answer": 1,
+      "era_note": "astronomy"
     },
     {
       "id": "s08",
       "category": "Science & Nature",
-      "difficulty": "hard",
-      "question": "Which scientist proposed the theory of general relativity?",
-      "choices": ["Isaac Newton", "Niels Bohr", "Albert Einstein", "Galileo Galilei"],
-      "answer": 2,
-      "era_note": "20th-century science"
+      "difficulty": 9,
+      "question": "Which scientist is credited with discovering penicillin?",
+      "choices": ["Louis Pasteur", "Alexander Fleming", "Robert Koch", "Joseph Lister"],
+      "answer": 1,
+      "era_note": "medical history"
     },
     {
       "id": "s09",
       "category": "Science & Nature",
-      "difficulty": "medium",
-      "question": "What is the largest mammal in the world?",
-      "choices": ["African elephant", "Blue whale", "Giraffe", "Hippopotamus"],
+      "difficulty": 4,
+      "question": "What force keeps planets in orbit around the Sun?",
+      "choices": ["Magnetism", "Gravity", "Friction", "Centrifugal force"],
       "answer": 1,
-      "era_note": "evergreen nature"
+      "era_note": "physics"
     },
     {
       "id": "s10",
       "category": "Science & Nature",
-      "difficulty": "easy",
-      "question": "Water freezes at what temperature in Celsius?",
-      "choices": ["0°C", "32°C", "100°C", "-10°C"],
+      "difficulty": 8,
+      "question": "Which planet has the shortest day (fastest rotation) in our solar system?",
+      "choices": ["Mercury", "Earth", "Jupiter", "Neptune"],
+      "answer": 2,
+      "era_note": "astronomy"
+    },
+    {
+      "id": "s11",
+      "category": "Science & Nature",
+      "difficulty": 6,
+      "question": "What is the chemical formula for table salt?",
+      "choices": ["NaCl", "KCl", "CaCO3", "H2SO4"],
       "answer": 0,
-      "era_note": "evergreen science"
+      "era_note": "chemistry"
     },
     {
       "id": "g01",
       "category": "Geography",
-      "difficulty": "easy",
-      "question": "What is the largest continent by land area?",
-      "choices": ["Africa", "North America", "Asia", "Europe"],
+      "difficulty": 5,
+      "question": "Which African river is the longest?",
+      "choices": ["Congo", "Niger", "Nile", "Zambezi"],
       "answer": 2,
-      "era_note": "evergreen geography"
+      "era_note": "world rivers"
     },
     {
       "id": "g02",
       "category": "Geography",
-      "difficulty": "easy",
-      "question": "Which country is home to the Great Barrier Reef?",
-      "choices": ["Brazil", "Australia", "Indonesia", "Mexico"],
-      "answer": 1,
-      "era_note": "evergreen geography"
-    },
-    {
-      "id": "g03",
-      "category": "Geography",
-      "difficulty": "medium",
-      "question": "What is the capital of Canada?",
-      "choices": ["Toronto", "Vancouver", "Ottawa", "Montreal"],
-      "answer": 2,
-      "era_note": "evergreen geography"
-    },
-    {
-      "id": "g04",
-      "category": "Geography",
-      "difficulty": "medium",
-      "question": "Which river is the longest in the world?",
-      "choices": ["Amazon", "Nile", "Yangtze", "Mississippi"],
-      "answer": 1,
-      "era_note": "evergreen geography"
-    },
-    {
-      "id": "g05",
-      "category": "Geography",
-      "difficulty": "hard",
-      "question": "Which African country has Spanish as an official language?",
-      "choices": ["Morocco", "Equatorial Guinea", "Angola", "Mozambique"],
-      "answer": 1,
-      "era_note": "world geography deep cut"
-    },
-    {
-      "id": "g06",
-      "category": "Geography",
-      "difficulty": "easy",
-      "question": "Mount Everest lies on the border of Nepal and which country?",
-      "choices": ["India", "China", "Bhutan", "Pakistan"],
-      "answer": 1,
-      "era_note": "evergreen geography"
-    },
-    {
-      "id": "g07",
-      "category": "Geography",
-      "difficulty": "medium",
-      "question": "Which U.S. state has the most coastline?",
-      "choices": ["California", "Florida", "Alaska", "Hawaii"],
-      "answer": 2,
-      "era_note": "U.S. geography"
-    },
-    {
-      "id": "g08",
-      "category": "Geography",
-      "difficulty": "hard",
-      "question": "What is the capital of New Zealand?",
-      "choices": ["Auckland", "Christchurch", "Wellington", "Queenstown"],
+      "difficulty": 6,
+      "question": "What is the capital of Brazil?",
+      "choices": ["Rio de Janeiro", "São Paulo", "Brasília", "Salvador"],
       "answer": 2,
       "era_note": "world capitals"
     },
     {
+      "id": "g03",
+      "category": "Geography",
+      "difficulty": 7,
+      "question": "Which mountain range separates Europe from Asia in western Russia?",
+      "choices": ["Alps", "Caucasus", "Urals", "Carpathians"],
+      "answer": 2,
+      "era_note": "physical geography"
+    },
+    {
+      "id": "g04",
+      "category": "Geography",
+      "difficulty": 5,
+      "question": "Which country has the most time zones, including overseas territories?",
+      "choices": ["Russia", "United States", "France", "China"],
+      "answer": 2,
+      "era_note": "political geography"
+    },
+    {
+      "id": "g05",
+      "category": "Geography",
+      "difficulty": 8,
+      "question": "Lake Baikal, the world's deepest freshwater lake, is in which country?",
+      "choices": ["Canada", "Mongolia", "Russia", "Kazakhstan"],
+      "answer": 2,
+      "era_note": "physical geography"
+    },
+    {
+      "id": "g06",
+      "category": "Geography",
+      "difficulty": 6,
+      "question": "Which strait separates Spain from Morocco?",
+      "choices": ["Bosporus", "Strait of Gibraltar", "Dardanelles", "Strait of Hormuz"],
+      "answer": 1,
+      "era_note": "world straits"
+    },
+    {
+      "id": "g07",
+      "category": "Geography",
+      "difficulty": 7,
+      "question": "What is the only country that is also a continent?",
+      "choices": ["Greenland", "Australia", "Antarctica", "Madagascar"],
+      "answer": 1,
+      "era_note": "world geography"
+    },
+    {
+      "id": "g08",
+      "category": "Geography",
+      "difficulty": 9,
+      "question": "Which capital city stands on the island of Zealand?",
+      "choices": ["Stockholm", "Oslo", "Copenhagen", "Helsinki"],
+      "answer": 2,
+      "era_note": "European geography"
+    },
+    {
       "id": "g09",
       "category": "Geography",
-      "difficulty": "medium",
-      "question": "The Sahara Desert is primarily located on which continent?",
-      "choices": ["Asia", "Australia", "Africa", "South America"],
+      "difficulty": 4,
+      "question": "Which desert covers much of northern Africa?",
+      "choices": ["Gobi", "Kalahari", "Sahara", "Atacama"],
       "answer": 2,
-      "era_note": "evergreen geography"
+      "era_note": "physical geography"
     },
     {
       "id": "g10",
       "category": "Geography",
-      "difficulty": "easy",
-      "question": "Which city is known as the Big Apple?",
-      "choices": ["Los Angeles", "Chicago", "New York City", "Boston"],
+      "difficulty": 8,
+      "question": "Which U.S. state capital is named after a German chancellor?",
+      "choices": ["Jefferson City", "Bismarck", "Madison", "Lincoln"],
+      "answer": 1,
+      "era_note": "U.S. geography"
+    },
+    {
+      "id": "g11",
+      "category": "Geography",
+      "difficulty": 6,
+      "question": "The Andes mountains run primarily through which continent?",
+      "choices": ["Africa", "Asia", "South America", "Europe"],
       "answer": 2,
-      "era_note": "cultural geography"
+      "era_note": "physical geography"
     },
     {
       "id": "m01",
       "category": "Movies & TV",
-      "difficulty": "easy",
-      "question": "In which film franchise would you hear 'May the Force be with you'?",
-      "choices": ["Star Trek", "Star Wars", "Guardians of the Galaxy", "Dune"],
+      "difficulty": 5,
+      "question": "Which film won the Academy Award for Best Picture in 1994?",
+      "choices": ["Pulp Fiction", "Forrest Gump", "The Shawshank Redemption", "Four Weddings and a Funeral"],
       "answer": 1,
-      "era_note": "multi-generational"
+      "era_note": "1990s film"
     },
     {
       "id": "m02",
       "category": "Movies & TV",
-      "difficulty": "easy",
-      "question": "Who played Jack in the 1997 film Titanic?",
-      "choices": ["Brad Pitt", "Matt Damon", "Leonardo DiCaprio", "Tom Cruise"],
-      "answer": 2,
-      "era_note": "1990s classic"
+      "difficulty": 6,
+      "question": "In Breaking Bad, what is Walter White's street alias?",
+      "choices": ["Heisenberg", "Blue Sky", "Gus", "Saul"],
+      "answer": 0,
+      "era_note": "2000s–2010s TV"
     },
     {
       "id": "m03",
       "category": "Movies & TV",
-      "difficulty": "medium",
-      "question": "Which TV series features the fictional continent of Westeros?",
-      "choices": ["The Witcher", "Game of Thrones", "Shadow and Bone", "The Rings of Power"],
-      "answer": 1,
-      "era_note": "2010s phenomenon"
-    },
-    {
-      "id": "m04",
-      "category": "Movies & TV",
-      "difficulty": "medium",
-      "question": "What is the name of the coffee shop in the TV show Friends?",
-      "choices": ["Central Perk", "Monk's Café", "MacLaren's", "Luke's Diner"],
-      "answer": 0,
-      "era_note": "1990s–2000s TV"
-    },
-    {
-      "id": "m05",
-      "category": "Movies & TV",
-      "difficulty": "hard",
-      "question": "Who directed the 1941 film Citizen Kane?",
-      "choices": ["Alfred Hitchcock", "Orson Welles", "John Ford", "Frank Capra"],
+      "difficulty": 7,
+      "question": "Who directed the 1972 film The Godfather?",
+      "choices": ["Martin Scorsese", "Francis Ford Coppola", "Stanley Kubrick", "Sidney Lumet"],
       "answer": 1,
       "era_note": "classic cinema"
     },
     {
+      "id": "m04",
+      "category": "Movies & TV",
+      "difficulty": 5,
+      "question": "What is the name of the coffee shop gang's hangout in Seinfeld?",
+      "choices": ["Central Perk", "Monk's Café", "MacLaren's Pub", "Luke's Diner"],
+      "answer": 1,
+      "era_note": "1990s TV"
+    },
+    {
+      "id": "m05",
+      "category": "Movies & TV",
+      "difficulty": 8,
+      "question": "Which actress played Clarice Starling in The Silence of the Lambs?",
+      "choices": ["Meryl Streep", "Jodie Foster", "Sigourney Weaver", "Glenn Close"],
+      "answer": 1,
+      "era_note": "1990s film"
+    },
+    {
       "id": "m06",
       "category": "Movies & TV",
-      "difficulty": "easy",
-      "question": "Which animated film features a clownfish searching for his son?",
-      "choices": ["Shark Tale", "Finding Nemo", "The Little Mermaid", "Moana"],
-      "answer": 1,
-      "era_note": "family film"
+      "difficulty": 6,
+      "question": "In The Office (U.S.), which character invented the 'Dundies'?",
+      "choices": ["Jim Halpert", "Dwight Schrute", "Michael Scott", "Andy Bernard"],
+      "answer": 2,
+      "era_note": "2000s TV"
     },
     {
       "id": "m07",
       "category": "Movies & TV",
-      "difficulty": "medium",
-      "question": "In The Matrix, what color pill does Neo take?",
-      "choices": ["Blue", "Red", "Green", "Yellow"],
-      "answer": 1,
-      "era_note": "late-1990s landmark"
+      "difficulty": 7,
+      "question": "Which Studio Ghibli film features a girl working in a bathhouse for spirits?",
+      "choices": ["My Neighbor Totoro", "Princess Mononoke", "Spirited Away", "Howl's Moving Castle"],
+      "answer": 2,
+      "era_note": "2000s animation"
     },
     {
       "id": "m08",
       "category": "Movies & TV",
-      "difficulty": "hard",
-      "question": "Which actress won an Oscar for her role in La La Land?",
-      "choices": ["Emma Stone", "Emma Watson", "Anne Hathaway", "Jennifer Lawrence"],
-      "answer": 0,
-      "era_note": "2010s film"
+      "difficulty": 9,
+      "question": "What was the original working title of the TV show Friends?",
+      "choices": ["Six of One", "Central Perk", "Insomnia Café", "Across the Hall"],
+      "answer": 2,
+      "era_note": "1990s TV deep cut"
     },
     {
       "id": "m09",
       "category": "Movies & TV",
-      "difficulty": "medium",
-      "question": "What is the name of the fictional paper company in The Office (U.S.)?",
-      "choices": ["Initech", "Dunder Mifflin", "Sterling Cooper", "Bluth Company"],
-      "answer": 1,
-      "era_note": "2000s TV"
+      "difficulty": 4,
+      "question": "Which actor plays Iron Man in the Marvel Cinematic Universe?",
+      "choices": ["Chris Evans", "Chris Hemsworth", "Robert Downey Jr.", "Mark Ruffalo"],
+      "answer": 2,
+      "era_note": "2000s–2010s film"
     },
     {
       "id": "m10",
       "category": "Movies & TV",
-      "difficulty": "easy",
-      "question": "Which superhero is also known as the Caped Crusader?",
-      "choices": ["Superman", "Spider-Man", "Batman", "Iron Man"],
+      "difficulty": 8,
+      "question": "Which Hitchcock film features a crop-duster attack on Cary Grant?",
+      "choices": ["Psycho", "Vertigo", "North by Northwest", "Rear Window"],
       "answer": 2,
-      "era_note": "multi-generational"
+      "era_note": "classic cinema"
+    },
+    {
+      "id": "m11",
+      "category": "Movies & TV",
+      "difficulty": 6,
+      "question": "In Stranger Things, what is the parallel dimension called?",
+      "choices": ["The Shadow Realm", "The Upside Down", "The Void", "The Other Side"],
+      "answer": 1,
+      "era_note": "2010s TV"
     },
     {
       "id": "u01",
       "category": "Music",
-      "difficulty": "easy",
-      "question": "Which band performed 'Hey Jude'?",
-      "choices": ["The Rolling Stones", "The Beatles", "The Who", "Queen"],
-      "answer": 1,
-      "era_note": "1960s classic"
+      "difficulty": 5,
+      "question": "Which Beatles album features the song 'Come Together'?",
+      "choices": ["Abbey Road", "Revolver", "Rubber Soul", "Let It Be"],
+      "answer": 0,
+      "era_note": "1960s rock"
     },
     {
       "id": "u02",
       "category": "Music",
-      "difficulty": "easy",
-      "question": "Who is known as the 'King of Pop'?",
-      "choices": ["Elvis Presley", "Prince", "Michael Jackson", "Freddie Mercury"],
-      "answer": 2,
-      "era_note": "1980s icon"
+      "difficulty": 6,
+      "question": "Which band released the 1977 album Rumours?",
+      "choices": ["Eagles", "Fleetwood Mac", "The Rolling Stones", "Led Zeppelin"],
+      "answer": 1,
+      "era_note": "1970s rock"
     },
     {
       "id": "u03",
       "category": "Music",
-      "difficulty": "medium",
-      "question": "Which singer released the album 1989?",
-      "choices": ["Adele", "Taylor Swift", "Billie Eilish", "Lady Gaga"],
+      "difficulty": 7,
+      "question": "What is the highest female singing voice type in classical music?",
+      "choices": ["Mezzo-soprano", "Soprano", "Alto", "Contralto"],
       "answer": 1,
-      "era_note": "2010s pop"
+      "era_note": "classical"
     },
     {
       "id": "u04",
       "category": "Music",
-      "difficulty": "medium",
-      "question": "What instrument is Yo-Yo Ma famous for playing?",
-      "choices": ["Violin", "Piano", "Cello", "Flute"],
-      "answer": 2,
-      "era_note": "classical crossover"
+      "difficulty": 5,
+      "question": "Which singer's real name is Stefani Germanotta?",
+      "choices": ["Lady Gaga", "Madonna", "Pink", "Kesha"],
+      "answer": 0,
+      "era_note": "2000s–2010s pop"
     },
     {
       "id": "u05",
       "category": "Music",
-      "difficulty": "hard",
-      "question": "Which composer wrote The Four Seasons?",
-      "choices": ["Bach", "Mozart", "Vivaldi", "Beethoven"],
-      "answer": 2,
-      "era_note": "classical music"
+      "difficulty": 8,
+      "question": "Which composer wrote the opera The Marriage of Figaro?",
+      "choices": ["Beethoven", "Mozart", "Verdi", "Puccini"],
+      "answer": 1,
+      "era_note": "classical"
     },
     {
       "id": "u06",
       "category": "Music",
-      "difficulty": "easy",
-      "question": "Which Queen song asks 'Is this the real life?'",
-      "choices": ["We Will Rock You", "Bohemian Rhapsody", "Somebody to Love", "Don't Stop Me Now"],
+      "difficulty": 6,
+      "question": "Which artist released the album To Pimp a Butterfly?",
+      "choices": ["Drake", "Kendrick Lamar", "J. Cole", "Kanye West"],
       "answer": 1,
-      "era_note": "1970s classic"
+      "era_note": "2010s hip-hop"
     },
     {
       "id": "u07",
       "category": "Music",
-      "difficulty": "medium",
-      "question": "Which artist had a massive hit with 'Shape of You'?",
-      "choices": ["Ed Sheeran", "Justin Bieber", "Bruno Mars", "The Weeknd"],
-      "answer": 0,
-      "era_note": "2010s pop"
+      "difficulty": 7,
+      "question": "David Bowie's alter ego from the early 1970s was named what?",
+      "choices": ["The Thin White Duke", "Ziggy Stardust", "Aladdin Sane", "Major Tom"],
+      "answer": 1,
+      "era_note": "1970s rock"
     },
     {
       "id": "u08",
       "category": "Music",
-      "difficulty": "hard",
-      "question": "What was the name of Madonna's first U.S. No. 1 hit single?",
-      "choices": ["Like a Virgin", "Material Girl", "Holiday", "Lucky Star"],
-      "answer": 0,
-      "era_note": "1980s pop"
+      "difficulty": 9,
+      "question": "Which instrument does Ravi Shankar famously play?",
+      "choices": ["Tabla", "Sitar", "Sarod", "Veena"],
+      "answer": 1,
+      "era_note": "world classical"
     },
     {
       "id": "u09",
       "category": "Music",
-      "difficulty": "medium",
-      "question": "Which rapper released the album The Marshall Mathers LP?",
-      "choices": ["Jay-Z", "Eminem", "Drake", "Kanye West"],
+      "difficulty": 4,
+      "question": "Which band performed 'Bohemian Rhapsody'?",
+      "choices": ["Led Zeppelin", "Queen", "The Who", "Pink Floyd"],
       "answer": 1,
-      "era_note": "2000s hip-hop"
+      "era_note": "1970s rock"
     },
     {
       "id": "u10",
       "category": "Music",
-      "difficulty": "easy",
-      "question": "How many strings does a standard guitar usually have?",
-      "choices": ["4", "5", "6", "8"],
+      "difficulty": 8,
+      "question": "Which Mariah Carey single spent 16 weeks at No. 1 on the Billboard Hot 100 in 1995–96?",
+      "choices": ["Hero", "Vision of Love", "One Sweet Day", "We Belong Together"],
       "answer": 2,
-      "era_note": "evergreen music"
+      "era_note": "1990s pop"
+    },
+    {
+      "id": "u11",
+      "category": "Music",
+      "difficulty": 6,
+      "question": "Which country is ABBA originally from?",
+      "choices": ["Norway", "Denmark", "Sweden", "Finland"],
+      "answer": 2,
+      "era_note": "1970s pop"
     },
     {
       "id": "p01",
       "category": "Sports",
-      "difficulty": "easy",
-      "question": "How many players are on the field for one soccer team during a match?",
-      "choices": ["9", "10", "11", "12"],
-      "answer": 2,
-      "era_note": "evergreen sports"
+      "difficulty": 5,
+      "question": "How many Grand Slam tournaments are there in tennis each year?",
+      "choices": ["3", "4", "5", "6"],
+      "answer": 1,
+      "era_note": "tennis"
     },
     {
       "id": "p02",
       "category": "Sports",
-      "difficulty": "easy",
-      "question": "Which sport uses a shuttlecock?",
-      "choices": ["Tennis", "Badminton", "Squash", "Table tennis"],
+      "difficulty": 6,
+      "question": "As of 2024, which two NFL teams are tied with six Super Bowl wins each?",
+      "choices": [
+        "Cowboys and 49ers",
+        "Patriots and Steelers",
+        "Packers and Giants",
+        "Broncos and Raiders"
+      ],
       "answer": 1,
-      "era_note": "evergreen sports"
+      "era_note": "American football"
     },
     {
       "id": "p03",
       "category": "Sports",
-      "difficulty": "medium",
-      "question": "Which country has won the most FIFA World Cups?",
-      "choices": ["Germany", "Italy", "Argentina", "Brazil"],
-      "answer": 3,
-      "era_note": "world soccer"
+      "difficulty": 7,
+      "question": "In baseball, what is a 'perfect game'?",
+      "choices": [
+        "No hits allowed, walks allowed",
+        "No baserunners allowed at all",
+        "Only strikeouts for 9 innings",
+        "A shutout with 10+ strikeouts"
+      ],
+      "answer": 1,
+      "era_note": "baseball"
     },
     {
       "id": "p04",
       "category": "Sports",
-      "difficulty": "medium",
-      "question": "In baseball, how many strikes make an out?",
-      "choices": ["2", "3", "4", "5"],
-      "answer": 1,
-      "era_note": "evergreen sports"
+      "difficulty": 5,
+      "question": "Which country hosted the 2016 Summer Olympics?",
+      "choices": ["China", "United Kingdom", "Brazil", "Japan"],
+      "answer": 2,
+      "era_note": "Olympics"
     },
     {
       "id": "p05",
       "category": "Sports",
-      "difficulty": "hard",
-      "question": "Which athlete holds the official men's 100m world record (9.58 seconds)?",
-      "choices": ["Carl Lewis", "Usain Bolt", "Justin Gatlin", "Tyson Gay"],
+      "difficulty": 8,
+      "question": "Who is the NBA's all-time leader in career points (regular season, as of 2024)?",
+      "choices": ["Kareem Abdul-Jabbar", "LeBron James", "Karl Malone", "Kobe Bryant"],
       "answer": 1,
-      "era_note": "2000s–2010s track"
+      "era_note": "basketball"
     },
     {
       "id": "p06",
       "category": "Sports",
-      "difficulty": "easy",
-      "question": "How many points is a touchdown worth in American football (before the extra point)?",
-      "choices": ["3", "6", "7", "8"],
-      "answer": 1,
-      "era_note": "evergreen sports"
+      "difficulty": 6,
+      "question": "In soccer, what is it called when a player scores three goals in one match?",
+      "choices": ["Hat-trick", "Triple play", "Clean sheet", "Brace"],
+      "answer": 0,
+      "era_note": "soccer"
     },
     {
       "id": "p07",
       "category": "Sports",
-      "difficulty": "medium",
-      "question": "Which city hosted the 2012 Summer Olympics?",
-      "choices": ["Beijing", "Athens", "London", "Rio de Janeiro"],
-      "answer": 2,
-      "era_note": "2010s Olympics"
+      "difficulty": 7,
+      "question": "Which boxer was known as 'The Greatest' and refused Vietnam War induction?",
+      "choices": ["Joe Frazier", "Muhammad Ali", "Sugar Ray Leonard", "George Foreman"],
+      "answer": 1,
+      "era_note": "boxing / 1960s–70s"
     },
     {
       "id": "p08",
       "category": "Sports",
-      "difficulty": "hard",
-      "question": "In tennis, what is a score of zero called?",
-      "choices": ["Nil", "Love", "Blank", "Duck"],
-      "answer": 1,
-      "era_note": "evergreen sports"
+      "difficulty": 9,
+      "question": "In cricket, how many runs is a 'century'?",
+      "choices": ["50", "75", "100", "150"],
+      "answer": 2,
+      "era_note": "cricket"
     },
     {
       "id": "p09",
       "category": "Sports",
-      "difficulty": "medium",
-      "question": "Which NBA team did Michael Jordan play for during most of his career?",
-      "choices": ["Los Angeles Lakers", "Chicago Bulls", "Boston Celtics", "Miami Heat"],
+      "difficulty": 4,
+      "question": "How many players are on the court for one basketball team at a time?",
+      "choices": ["4", "5", "6", "7"],
       "answer": 1,
-      "era_note": "1980s–1990s basketball"
+      "era_note": "basketball"
     },
     {
       "id": "p10",
       "category": "Sports",
-      "difficulty": "easy",
-      "question": "In bowling, what is it called when you knock down all ten pins on the first roll?",
-      "choices": ["Spare", "Strike", "Split", "Turkey"],
+      "difficulty": 8,
+      "question": "Which nation won the first FIFA World Cup in 1930?",
+      "choices": ["Brazil", "Argentina", "Uruguay", "Italy"],
+      "answer": 2,
+      "era_note": "soccer history"
+    },
+    {
+      "id": "p11",
+      "category": "Sports",
+      "difficulty": 6,
+      "question": "What is the maximum break score in snooker?",
+      "choices": ["100", "147", "155", "180"],
       "answer": 1,
-      "era_note": "evergreen sports"
+      "era_note": "cue sports"
     },
     {
       "id": "l01",
       "category": "Literature",
-      "difficulty": "easy",
-      "question": "Who wrote Romeo and Juliet?",
-      "choices": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+      "difficulty": 5,
+      "question": "Who wrote the novel 1984?",
+      "choices": ["Aldous Huxley", "George Orwell", "Ray Bradbury", "Kurt Vonnegut"],
       "answer": 1,
-      "era_note": "classic literature"
+      "era_note": "20th-century classic"
     },
     {
       "id": "l02",
       "category": "Literature",
-      "difficulty": "easy",
-      "question": "In Harry Potter, what house is Harry sorted into?",
-      "choices": ["Slytherin", "Hufflepuff", "Ravenclaw", "Gryffindor"],
-      "answer": 3,
-      "era_note": "1990s–2000s YA"
+      "difficulty": 6,
+      "question": "In The Catcher in the Rye, what is the protagonist's name?",
+      "choices": ["Holden Caulfield", "Nick Carraway", "Jay Gatsby", "Scout Finch"],
+      "answer": 0,
+      "era_note": "American classic"
     },
     {
       "id": "l03",
       "category": "Literature",
-      "difficulty": "medium",
-      "question": "Which novel begins with 'Call me Ishmael'?",
-      "choices": ["Moby-Dick", "The Old Man and the Sea", "Treasure Island", "Twenty Thousand Leagues Under the Sea"],
-      "answer": 0,
-      "era_note": "classic literature"
+      "difficulty": 7,
+      "question": "Which Shakespeare play features the characters Rosencrantz and Guildenstern?",
+      "choices": ["Macbeth", "Hamlet", "King Lear", "Othello"],
+      "answer": 1,
+      "era_note": "Elizabethan drama"
     },
     {
       "id": "l04",
       "category": "Literature",
-      "difficulty": "medium",
-      "question": "Who wrote The Great Gatsby?",
-      "choices": ["Ernest Hemingway", "F. Scott Fitzgerald", "John Steinbeck", "William Faulkner"],
-      "answer": 1,
-      "era_note": "American classic"
+      "difficulty": 5,
+      "question": "Who wrote Pride and Prejudice?",
+      "choices": ["Charlotte Brontë", "Emily Brontë", "Jane Austen", "Mary Shelley"],
+      "answer": 2,
+      "era_note": "English classic"
     },
     {
       "id": "l05",
       "category": "Literature",
-      "difficulty": "hard",
-      "question": "Which author created the detective Hercule Poirot?",
-      "choices": ["Arthur Conan Doyle", "Agatha Christie", "Dorothy L. Sayers", "P. D. James"],
+      "difficulty": 8,
+      "question": "Which novel opens with 'It was the best of times, it was the worst of times'?",
+      "choices": ["Great Expectations", "A Tale of Two Cities", "Oliver Twist", "Bleak House"],
       "answer": 1,
-      "era_note": "classic mystery"
+      "era_note": "Victorian literature"
     },
     {
       "id": "l06",
       "category": "Literature",
-      "difficulty": "easy",
-      "question": "What is the name of the hobbit who takes the One Ring to Mordor?",
-      "choices": ["Bilbo Baggins", "Frodo Baggins", "Samwise Gamgee", "Peregrin Took"],
+      "difficulty": 6,
+      "question": "Who created the detective Sherlock Holmes?",
+      "choices": ["Agatha Christie", "Arthur Conan Doyle", "Edgar Allan Poe", "Wilkie Collins"],
       "answer": 1,
-      "era_note": "multi-generational fantasy"
+      "era_note": "mystery fiction"
     },
     {
       "id": "l07",
       "category": "Literature",
-      "difficulty": "medium",
-      "question": "Which dystopian novel features the phrase 'Big Brother is watching you'?",
-      "choices": ["Brave New World", "Fahrenheit 451", "1984", "The Handmaid's Tale"],
+      "difficulty": 7,
+      "question": "Which Toni Morrison novel centers on a girl who longs for blue eyes?",
+      "choices": ["Beloved", "Song of Solomon", "The Bluest Eye", "Sula"],
       "answer": 2,
-      "era_note": "20th-century classic"
+      "era_note": "American literature"
     },
     {
       "id": "l08",
       "category": "Literature",
-      "difficulty": "hard",
-      "question": "Who wrote the epic poem Paradise Lost?",
-      "choices": ["John Milton", "Geoffrey Chaucer", "John Donne", "Edmund Spenser"],
-      "answer": 0,
-      "era_note": "English literature"
+      "difficulty": 9,
+      "question": "Who wrote the Spanish novel Don Quixote?",
+      "choices": ["Lope de Vega", "Miguel de Cervantes", "Federico García Lorca", "Jorge Luis Borges"],
+      "answer": 1,
+      "era_note": "world literature"
     },
     {
       "id": "l09",
       "category": "Literature",
-      "difficulty": "medium",
-      "question": "In To Kill a Mockingbird, what is the name of Scout's father?",
-      "choices": ["Boo Radley", "Atticus Finch", "Tom Robinson", "Jem Finch"],
+      "difficulty": 4,
+      "question": "Which fantasy series features Hogwarts School of Witchcraft and Wizardry?",
+      "choices": ["The Chronicles of Narnia", "Harry Potter", "Percy Jackson", "His Dark Materials"],
       "answer": 1,
-      "era_note": "American classic"
+      "era_note": "1990s–2000s YA"
     },
     {
       "id": "l10",
       "category": "Literature",
-      "difficulty": "easy",
-      "question": "Who wrote the Diary of a Young Girl while hiding during World War II?",
-      "choices": ["Anne Frank", "Helen Keller", "Maya Angelou", "Malala Yousafzai"],
-      "answer": 0,
-      "era_note": "historical memoir"
+      "difficulty": 8,
+      "question": "Which poet wrote 'The Waste Land'?",
+      "choices": ["W. B. Yeats", "T. S. Eliot", "Robert Frost", "Ezra Pound"],
+      "answer": 1,
+      "era_note": "modernist poetry"
+    },
+    {
+      "id": "l11",
+      "category": "Literature",
+      "difficulty": 6,
+      "question": "In Lord of the Flies, who is the first boy elected leader?",
+      "choices": ["Jack", "Piggy", "Ralph", "Simon"],
+      "answer": 2,
+      "era_note": "20th-century classic"
     },
     {
       "id": "f01",
       "category": "Food & Drink",
-      "difficulty": "easy",
-      "question": "Which fruit is traditionally used to make guacamole?",
-      "choices": ["Tomato", "Avocado", "Mango", "Cucumber"],
+      "difficulty": 5,
+      "question": "Which country is the origin of goulash?",
+      "choices": ["Poland", "Hungary", "Austria", "Czech Republic"],
       "answer": 1,
-      "era_note": "everyday food"
+      "era_note": "world cuisine"
     },
     {
       "id": "f02",
       "category": "Food & Drink",
-      "difficulty": "easy",
-      "question": "Sushi originated in which country?",
-      "choices": ["China", "Korea", "Japan", "Thailand"],
+      "difficulty": 6,
+      "question": "What grain is traditionally used to make risotto?",
+      "choices": ["Jasmine rice", "Basmati rice", "Arborio rice", "Wild rice"],
       "answer": 2,
-      "era_note": "world cuisine"
+      "era_note": "Italian cuisine"
     },
     {
       "id": "f03",
       "category": "Food & Drink",
-      "difficulty": "medium",
-      "question": "What is the main ingredient in traditional hummus?",
-      "choices": ["Lentils", "Chickpeas", "Black beans", "Peas"],
-      "answer": 1,
-      "era_note": "world cuisine"
+      "difficulty": 7,
+      "question": "Which spirit is the base of a classic Mojito?",
+      "choices": ["Vodka", "Gin", "Rum", "Tequila"],
+      "answer": 2,
+      "era_note": "cocktails"
     },
     {
       "id": "f04",
       "category": "Food & Drink",
-      "difficulty": "medium",
-      "question": "Which country is credited with inventing pizza in its modern form?",
-      "choices": ["France", "Greece", "Italy", "United States"],
-      "answer": 2,
+      "difficulty": 5,
+      "question": "What is tofu primarily made from?",
+      "choices": ["Rice", "Soybeans", "Wheat", "Chickpeas"],
+      "answer": 1,
       "era_note": "world cuisine"
     },
     {
       "id": "f05",
       "category": "Food & Drink",
-      "difficulty": "hard",
-      "question": "What spice gives traditional paella its distinctive yellow color?",
-      "choices": ["Turmeric", "Saffron", "Paprika", "Cumin"],
-      "answer": 1,
-      "era_note": "culinary knowledge"
+      "difficulty": 8,
+      "question": "Which French region is Champagne legally required to come from?",
+      "choices": ["Burgundy", "Bordeaux", "Champagne", "Alsace"],
+      "answer": 2,
+      "era_note": "wine knowledge"
     },
     {
       "id": "f06",
       "category": "Food & Drink",
-      "difficulty": "easy",
-      "question": "Which dairy product is the main ingredient in traditional cheese pizza?",
-      "choices": ["Cheddar", "Mozzarella", "Swiss", "Brie"],
+      "difficulty": 6,
+      "question": "Wasabi is traditionally made from the root of which plant family relative?",
+      "choices": ["Ginger", "Horseradish / mustard family", "Wasabi is a seaweed", "Turmeric"],
       "answer": 1,
-      "era_note": "everyday food"
+      "era_note": "Japanese cuisine"
     },
     {
       "id": "f07",
       "category": "Food & Drink",
-      "difficulty": "medium",
-      "question": "Espresso is most closely associated with which country's coffee culture?",
-      "choices": ["France", "Italy", "Turkey", "Ethiopia"],
+      "difficulty": 7,
+      "question": "Which cheese is traditionally used in Greek salad?",
+      "choices": ["Halloumi", "Feta", "Mozzarella", "Ricotta"],
       "answer": 1,
-      "era_note": "world drinks"
+      "era_note": "Mediterranean cuisine"
     },
     {
       "id": "f08",
       "category": "Food & Drink",
-      "difficulty": "hard",
-      "question": "Which French mother sauce is made from milk and a white roux?",
-      "choices": ["Espagnole", "Velouté", "Béchamel", "Hollandaise"],
-      "answer": 2,
-      "era_note": "culinary technique"
+      "difficulty": 9,
+      "question": "What is the main flavoring in the Italian digestif Fernet-Branca?",
+      "choices": ["Anise only", "A bitter blend of herbs and spices", "Coffee", "Orange peel alone"],
+      "answer": 1,
+      "era_note": "spirits deep cut"
     },
     {
       "id": "f09",
       "category": "Food & Drink",
-      "difficulty": "medium",
-      "question": "What type of pastry is used to make croissants?",
-      "choices": ["Puff pastry (laminated dough)", "Choux pastry", "Shortcrust", "Phyllo"],
-      "answer": 0,
-      "era_note": "baking knowledge"
+      "difficulty": 4,
+      "question": "Which cuisine is sushi most closely associated with?",
+      "choices": ["Chinese", "Korean", "Japanese", "Thai"],
+      "answer": 2,
+      "era_note": "world cuisine"
     },
     {
       "id": "f10",
       "category": "Food & Drink",
-      "difficulty": "easy",
-      "question": "Which breakfast food is made from batter cooked on a griddle and often served with syrup?",
-      "choices": ["Waffles", "Pancakes", "Crepes", "Bagels"],
+      "difficulty": 8,
+      "question": "What does the culinary term 'mise en place' mean?",
+      "choices": [
+        "Cook over high heat",
+        "Everything in its place / prep ready",
+        "Serve family style",
+        "Finish with butter"
+      ],
       "answer": 1,
-      "era_note": "everyday food"
+      "era_note": "culinary technique"
+    },
+    {
+      "id": "f11",
+      "category": "Food & Drink",
+      "difficulty": 6,
+      "question": "Which bean is traditionally used to make black bean sauce in Chinese cooking?",
+      "choices": ["Kidney beans", "Fermented black soybeans", "Black turtle beans", "Pinto beans"],
+      "answer": 1,
+      "era_note": "Chinese cuisine"
     },
     {
       "id": "t01",
       "category": "Technology",
-      "difficulty": "easy",
-      "question": "What does 'WWW' stand for in a website address?",
-      "choices": ["World Wide Web", "Web World Wide", "Wide World Web", "Wireless Web World"],
-      "answer": 0,
+      "difficulty": 5,
+      "question": "What does 'URL' stand for?",
+      "choices": [
+        "Universal Resource Locator",
+        "Uniform Resource Locator",
+        "United Reference Link",
+        "User Remote Login"
+      ],
+      "answer": 1,
       "era_note": "internet basics"
     },
     {
       "id": "t02",
       "category": "Technology",
-      "difficulty": "easy",
-      "question": "Which company created the iPhone?",
-      "choices": ["Google", "Microsoft", "Apple", "Samsung"],
-      "answer": 2,
-      "era_note": "2000s tech"
+      "difficulty": 6,
+      "question": "Which company developed the Android operating system before Google acquired it?",
+      "choices": ["Android Inc.", "Nokia", "BlackBerry", "Palm"],
+      "answer": 0,
+      "era_note": "mobile history"
     },
     {
       "id": "t03",
       "category": "Technology",
-      "difficulty": "medium",
-      "question": "What does CPU stand for?",
-      "choices": ["Central Processing Unit", "Computer Personal Utility", "Core Program Umbrella", "Central Program Upload"],
-      "answer": 0,
-      "era_note": "computer basics"
+      "difficulty": 7,
+      "question": "In computing, what does 'GPU' stand for?",
+      "choices": [
+        "General Processing Unit",
+        "Graphics Processing Unit",
+        "Global Program Utility",
+        "Graphical Protocol Upload"
+      ],
+      "answer": 1,
+      "era_note": "computer hardware"
     },
     {
       "id": "t04",
       "category": "Technology",
-      "difficulty": "medium",
-      "question": "Which social platform was originally limited to 140-character posts?",
-      "choices": ["Facebook", "Instagram", "Twitter", "LinkedIn"],
-      "answer": 2,
-      "era_note": "2000s–2010s social"
+      "difficulty": 5,
+      "question": "Which protocol encrypts web traffic in HTTPS?",
+      "choices": ["FTP", "TLS/SSL", "SMTP", "SSH"],
+      "answer": 1,
+      "era_note": "internet security"
     },
     {
       "id": "t05",
       "category": "Technology",
-      "difficulty": "hard",
-      "question": "Who is widely credited with inventing the World Wide Web?",
-      "choices": ["Bill Gates", "Tim Berners-Lee", "Steve Jobs", "Vint Cerf"],
+      "difficulty": 8,
+      "question": "Who co-founded Microsoft with Bill Gates?",
+      "choices": ["Steve Jobs", "Paul Allen", "Steve Ballmer", "Larry Ellison"],
       "answer": 1,
-      "era_note": "internet history"
+      "era_note": "tech history"
     },
     {
       "id": "t06",
       "category": "Technology",
-      "difficulty": "easy",
-      "question": "What does 'USB' commonly stand for?",
-      "choices": ["Universal Serial Bus", "United System Board", "Ultra Speed Bridge", "User Service Base"],
-      "answer": 0,
-      "era_note": "everyday tech"
+      "difficulty": 6,
+      "question": "What does 'RAM' stand for?",
+      "choices": [
+        "Readily Accessed Memory",
+        "Random Access Memory",
+        "Rapid Application Module",
+        "Read Always Memory"
+      ],
+      "answer": 1,
+      "era_note": "computer hardware"
     },
     {
       "id": "t07",
       "category": "Technology",
-      "difficulty": "medium",
-      "question": "Which programming language is often associated with a snake logo?",
-      "choices": ["Java", "Python", "Ruby", "Go"],
+      "difficulty": 7,
+      "question": "Which year did Facebook (Meta) acquire Instagram?",
+      "choices": ["2010", "2012", "2014", "2016"],
       "answer": 1,
-      "era_note": "coding culture"
+      "era_note": "2010s tech"
     },
     {
       "id": "t08",
       "category": "Technology",
-      "difficulty": "hard",
-      "question": "In what year was the first iPhone released?",
-      "choices": ["2005", "2007", "2009", "2010"],
+      "difficulty": 9,
+      "question": "What was the name of the first widely used web browser, released in 1993?",
+      "choices": ["Netscape Navigator", "Mosaic", "Internet Explorer", "Opera"],
       "answer": 1,
-      "era_note": "2000s tech"
+      "era_note": "internet history"
     },
     {
       "id": "t09",
       "category": "Technology",
-      "difficulty": "medium",
-      "question": "What does 'Wi-Fi' enable a device to do?",
-      "choices": ["Print documents only", "Connect wirelessly to a network", "Charge batteries faster", "Encrypt hard drives"],
-      "answer": 1,
-      "era_note": "everyday tech"
+      "difficulty": 4,
+      "question": "Which company makes the PlayStation console line?",
+      "choices": ["Microsoft", "Nintendo", "Sony", "Sega"],
+      "answer": 2,
+      "era_note": "gaming"
     },
     {
       "id": "t10",
       "category": "Technology",
-      "difficulty": "easy",
-      "question": "Google's web browser is called what?",
-      "choices": ["Safari", "Firefox", "Edge", "Chrome"],
-      "answer": 3,
-      "era_note": "everyday tech"
+      "difficulty": 8,
+      "question": "In binary, what decimal number does 1010 represent?",
+      "choices": ["8", "9", "10", "12"],
+      "answer": 2,
+      "era_note": "computer science"
+    },
+    {
+      "id": "t11",
+      "category": "Technology",
+      "difficulty": 6,
+      "question": "Which language was created by Guido van Rossum?",
+      "choices": ["Ruby", "Python", "Perl", "Java"],
+      "answer": 1,
+      "era_note": "programming"
     },
     {
       "id": "k01",
       "category": "General Knowledge",
-      "difficulty": "easy",
-      "question": "How many days are in a leap year?",
-      "choices": ["364", "365", "366", "367"],
+      "difficulty": 5,
+      "question": "How many chambers does a human heart have?",
+      "choices": ["2", "3", "4", "5"],
       "answer": 2,
-      "era_note": "everyday knowledge"
+      "era_note": "anatomy"
     },
     {
       "id": "k02",
       "category": "General Knowledge",
-      "difficulty": "easy",
-      "question": "What do the Olympic rings represent?",
-      "choices": ["Five sports", "Five continents", "Five athletes", "Five languages"],
-      "answer": 1,
-      "era_note": "world symbols"
-    },
-    {
-      "id": "k03",
-      "category": "General Knowledge",
-      "difficulty": "medium",
-      "question": "How many sides does a hexagon have?",
-      "choices": ["5", "6", "7", "8"],
-      "answer": 1,
-      "era_note": "everyday knowledge"
-    },
-    {
-      "id": "k04",
-      "category": "General Knowledge",
-      "difficulty": "medium",
-      "question": "What is the smallest prime number?",
-      "choices": ["0", "1", "2", "3"],
-      "answer": 2,
-      "era_note": "math basics"
-    },
-    {
-      "id": "k05",
-      "category": "General Knowledge",
-      "difficulty": "hard",
-      "question": "Which language has the most native speakers worldwide?",
-      "choices": ["English", "Spanish", "Mandarin Chinese", "Hindi"],
-      "answer": 2,
-      "era_note": "world languages"
-    },
-    {
-      "id": "k06",
-      "category": "General Knowledge",
-      "difficulty": "easy",
-      "question": "How many minutes are in two hours?",
-      "choices": ["60", "90", "120", "180"],
-      "answer": 2,
-      "era_note": "everyday knowledge"
-    },
-    {
-      "id": "k07",
-      "category": "General Knowledge",
-      "difficulty": "medium",
-      "question": "What is the currency of Japan?",
-      "choices": ["Won", "Yen", "Yuan", "Baht"],
-      "answer": 1,
-      "era_note": "world knowledge"
-    },
-    {
-      "id": "k08",
-      "category": "General Knowledge",
-      "difficulty": "hard",
-      "question": "Which artist painted The Persistence of Memory, featuring melting clocks?",
-      "choices": ["Pablo Picasso", "Salvador Dalí", "Claude Monet", "Vincent van Gogh"],
+      "difficulty": 6,
+      "question": "Which artist cut off part of his own ear?",
+      "choices": ["Pablo Picasso", "Vincent van Gogh", "Claude Monet", "Edvard Munch"],
       "answer": 1,
       "era_note": "art history"
     },
     {
+      "id": "k03",
+      "category": "General Knowledge",
+      "difficulty": 7,
+      "question": "What is the only even prime number?",
+      "choices": ["0", "1", "2", "4"],
+      "answer": 2,
+      "era_note": "math"
+    },
+    {
+      "id": "k04",
+      "category": "General Knowledge",
+      "difficulty": 5,
+      "question": "Which planet is named after the Roman god of war?",
+      "choices": ["Venus", "Mars", "Jupiter", "Saturn"],
+      "answer": 1,
+      "era_note": "mythology / astronomy"
+    },
+    {
+      "id": "k05",
+      "category": "General Knowledge",
+      "difficulty": 8,
+      "question": "What is the rarest blood type among ABO groups (excluding Rh variants)?",
+      "choices": ["A", "B", "AB", "O"],
+      "answer": 2,
+      "era_note": "biology trivia"
+    },
+    {
+      "id": "k06",
+      "category": "General Knowledge",
+      "difficulty": 6,
+      "question": "Which chess piece can only move diagonally?",
+      "choices": ["Rook", "Knight", "Bishop", "Queen"],
+      "answer": 2,
+      "era_note": "games"
+    },
+    {
+      "id": "k07",
+      "category": "General Knowledge",
+      "difficulty": 7,
+      "question": "What is the capital of Australia?",
+      "choices": ["Sydney", "Melbourne", "Canberra", "Perth"],
+      "answer": 2,
+      "era_note": "world capitals"
+    },
+    {
+      "id": "k08",
+      "category": "General Knowledge",
+      "difficulty": 9,
+      "question": "Which Nobel Prize category did Marie Curie win twice (in different fields)?",
+      "choices": ["Peace and Literature", "Physics and Chemistry", "Medicine and Physics", "Chemistry twice"],
+      "answer": 1,
+      "era_note": "science history"
+    },
+    {
       "id": "k09",
       "category": "General Knowledge",
-      "difficulty": "medium",
-      "question": "Which dog breed is generally considered the tallest?",
-      "choices": ["Great Dane", "Saint Bernard", "Irish Wolfhound", "Mastiff"],
-      "answer": 2,
-      "era_note": "fun facts"
+      "difficulty": 4,
+      "question": "How many degrees are in a circle?",
+      "choices": ["90", "180", "270", "360"],
+      "answer": 3,
+      "era_note": "math basics"
     },
     {
       "id": "k10",
       "category": "General Knowledge",
-      "difficulty": "easy",
-      "question": "Which color do you get when you mix blue and yellow?",
-      "choices": ["Purple", "Orange", "Green", "Brown"],
+      "difficulty": 8,
+      "question": "Which philosopher wrote The Republic?",
+      "choices": ["Aristotle", "Plato", "Socrates", "Epicurus"],
+      "answer": 1,
+      "era_note": "philosophy"
+    },
+    {
+      "id": "k11",
+      "category": "General Knowledge",
+      "difficulty": 6,
+      "question": "What is the largest internal organ in the human body?",
+      "choices": ["Heart", "Brain", "Liver", "Lungs"],
       "answer": 2,
-      "era_note": "everyday knowledge"
+      "era_note": "anatomy"
     },
     {
       "id": "x01",
-      "category": "Movies & TV",
-      "difficulty": "medium",
-      "question": "Which sitcom featured the catchphrase 'How you doin'?'",
-      "choices": ["Seinfeld", "Friends", "How I Met Your Mother", "The Big Bang Theory"],
+      "category": "History",
+      "difficulty": 7,
+      "question": "Which empire was ruled by Suleiman the Magnificent at its peak?",
+      "choices": ["Mughal Empire", "Ottoman Empire", "Persian Empire", "Holy Roman Empire"],
       "answer": 1,
-      "era_note": "1990s–2000s TV"
+      "era_note": "early modern"
     },
     {
       "id": "x02",
-      "category": "Music",
-      "difficulty": "medium",
-      "question": "Which artist sang 'Rolling in the Deep'?",
-      "choices": ["Beyoncé", "Adele", "Rihanna", "Amy Winehouse"],
-      "answer": 1,
-      "era_note": "2010s pop"
+      "category": "Science & Nature",
+      "difficulty": 7,
+      "question": "What is the pH of pure water at standard conditions?",
+      "choices": ["0", "5", "7", "14"],
+      "answer": 2,
+      "era_note": "chemistry"
     },
     {
       "id": "x03",
-      "category": "History",
-      "difficulty": "medium",
-      "question": "Which ancient civilization built the pyramids at Giza?",
-      "choices": ["Romans", "Greeks", "Egyptians", "Persians"],
-      "answer": 2,
-      "era_note": "ancient world"
+      "category": "Movies & TV",
+      "difficulty": 7,
+      "question": "Which film franchise features the character Jack Sparrow?",
+      "choices": ["Indiana Jones", "Pirates of the Caribbean", "The Mummy", "National Treasure"],
+      "answer": 1,
+      "era_note": "2000s film"
     },
     {
       "id": "x04",
-      "category": "Science & Nature",
-      "difficulty": "medium",
-      "question": "What is the powerhouse of the cell?",
-      "choices": ["Nucleus", "Ribosome", "Mitochondria", "Golgi apparatus"],
-      "answer": 2,
-      "era_note": "biology basics"
+      "category": "Music",
+      "difficulty": 7,
+      "question": "Which album is Michael Jackson's best-selling studio album?",
+      "choices": ["Off the Wall", "Thriller", "Bad", "Dangerous"],
+      "answer": 1,
+      "era_note": "1980s pop"
     },
     {
       "id": "x05",
       "category": "Sports",
-      "difficulty": "medium",
-      "question": "How many holes are played in a standard round of golf?",
-      "choices": ["9", "12", "18", "21"],
-      "answer": 2,
-      "era_note": "evergreen sports"
+      "difficulty": 7,
+      "question": "In golf, what is one stroke under par on a hole called?",
+      "choices": ["Birdie", "Eagle", "Bogey", "Albatross"],
+      "answer": 0,
+      "era_note": "golf"
     },
     {
       "id": "x06",
       "category": "Geography",
-      "difficulty": "hard",
-      "question": "Which European country is divided into cantons?",
-      "choices": ["Belgium", "Switzerland", "Austria", "Netherlands"],
-      "answer": 1,
-      "era_note": "world geography"
+      "difficulty": 7,
+      "question": "Which sea separates Europe from Africa at its western end?",
+      "choices": ["Black Sea", "Red Sea", "Mediterranean Sea", "Caspian Sea"],
+      "answer": 2,
+      "era_note": "physical geography"
     },
     {
       "id": "x07",
       "category": "Technology",
-      "difficulty": "medium",
-      "question": "What does 'HTTP' stand for?",
+      "difficulty": 7,
+      "question": "What does 'HTML' stand for?",
       "choices": [
-        "HyperText Transfer Protocol",
-        "High Transfer Text Page",
-        "Host Type Transmission Process",
-        "Hyper Tool Transport Program"
+        "HyperText Markup Language",
+        "High Tech Modern Language",
+        "Hyper Transfer Machine Link",
+        "Home Tool Markup Language"
       ],
       "answer": 0,
-      "era_note": "internet basics"
+      "era_note": "web basics"
     },
     {
       "id": "x08",
       "category": "Literature",
-      "difficulty": "medium",
-      "question": "Which novel features the characters Elizabeth Bennet and Mr. Darcy?",
-      "choices": ["Jane Eyre", "Pride and Prejudice", "Wuthering Heights", "Sense and Sensibility"],
-      "answer": 1,
-      "era_note": "classic literature"
+      "difficulty": 7,
+      "question": "Which dystopian novel features the firemen who burn books?",
+      "choices": ["1984", "Brave New World", "Fahrenheit 451", "The Giver"],
+      "answer": 2,
+      "era_note": "20th-century classic"
     },
     {
       "id": "x09",
       "category": "Food & Drink",
-      "difficulty": "easy",
-      "question": "Which nut is used to make marzipan?",
-      "choices": ["Walnut", "Peanut", "Almond", "Cashew"],
-      "answer": 2,
-      "era_note": "culinary knowledge"
+      "difficulty": 7,
+      "question": "Which spice is made from the dried stigma of a crocus flower?",
+      "choices": ["Turmeric", "Saffron", "Paprika", "Cardamom"],
+      "answer": 1,
+      "era_note": "culinary"
     },
     {
       "id": "x10",
       "category": "General Knowledge",
-      "difficulty": "medium",
-      "question": "How many keys are on a standard full-size piano?",
-      "choices": ["76", "84", "88", "92"],
-      "answer": 2,
-      "era_note": "music trivia crossover"
+      "difficulty": 10,
+      "question": "Which language family includes Finnish, Estonian, and Hungarian?",
+      "choices": ["Indo-European", "Uralic", "Turkic", "Semitic"],
+      "answer": 1,
+      "era_note": "linguistics deep cut"
     }
   ]
 }
