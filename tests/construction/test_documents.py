@@ -8,7 +8,12 @@ from openjarvis.construction import documents as docs
 def test_normalize_line_items_with_direct_cost():
     items = docs.normalize_line_items(
         [
-            {"description": "Drywall", "quantity": 20, "unit": "sheet", "unit_cost": 12.5},
+            {
+                "description": "Drywall",
+                "quantity": 20,
+                "unit": "sheet",
+                "unit_cost": 12.5,
+            },
             {"description": "", "quantity": 1},  # dropped (no description)
         ]
     )

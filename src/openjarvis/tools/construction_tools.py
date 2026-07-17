@@ -182,7 +182,9 @@ class ProjectCreateTool(BaseTool):
                     "client": {"type": "string", "description": "Client name."},
                     "status": {
                         "type": "string",
-                        "description": "lead | quoted | active | completed | cancelled.",
+                        "description": (
+                            "lead | quoted | active | completed | cancelled."
+                        ),
                     },
                     "notes": {"type": "string", "description": "Optional notes."},
                 },
