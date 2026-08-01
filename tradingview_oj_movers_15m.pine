@@ -199,10 +199,10 @@ plot(inPos ? tp1 : na, 'TP1', color=color.new(#69f0ae, 0), style=plot.style_line
 plot(inPos ? tp2 : na, 'TP2', color=color.new(#00e676, 0), style=plot.style_linebr)
 plot(inPos ? tp3 : na, 'TP3', color=color.new(#00c853, 0), style=plot.style_linebr, linewidth=2)
 
-plotshape(callHit, title='CALL', style=shape.labelup, location.belowbar, color=color.lime, text='CALL', textcolor=color.white, size=size.small)
-plotshape(putHit, title='PUT', style=shape.labeldown, location.abovebar, color=color.red, text='PUT', textcolor=color.white, size=size.small)
-plotshape(slHit, title='SL', style=shape.xcross, location.belowbar, color=color.red, text='SL', textcolor=color.white, size=size.tiny)
-plotshape(eodHit, title='EOD', style=shape.xcross, location.abovebar, color=color.gray, text='EOD', textcolor=color.white, size=size.tiny)
+plotshape(callHit, title='CALL', style=shape.labelup, location=location.belowbar, color=color.lime, text='CALL', textcolor=color.white, size=size.small)
+plotshape(putHit, title='PUT', style=shape.labeldown, location=location.abovebar, color=color.red, text='PUT', textcolor=color.white, size=size.small)
+plotshape(slHit, title='SL', style=shape.xcross, location=location.belowbar, color=color.red, text='SL', textcolor=color.white, size=size.tiny)
+plotshape(eodHit, title='EOD', style=shape.xcross, location=location.abovebar, color=color.gray, text='EOD', textcolor=color.white, size=size.tiny)
 
 if tp1Hit
     label.new(bar_index, tp1, 'TP1', style=markSide == 'PUT' ? label.style_label_up : label.style_label_down, color=#69f0ae, textcolor=color.black, size=size.tiny)
