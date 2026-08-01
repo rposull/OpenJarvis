@@ -3,7 +3,7 @@ indicator('OJ Scale 15m — Any Stock', overlay=true, max_labels_count=500, max_
 
 // ============================================
 // BOT PLAYBOOK (any liquid stock / ETF — ATR-normalized)
-// Entry : EMA 5/21 cross → wait 3 bars → ALIGNED structure → EMA retest → no chase/climax → no squeeze
+// Entry : EMA 5/21 cross → wait 3 → no opposite structure → EMA retest → no squeeze/chase/climax
 // Size  : open 3 lots | risk 2% equity to stop (outside TV)
 // Scale : TP1 (+1R) close 1 | TP2 (+2R) close 1 | TP3 (+3R) close last
 // Hard exits: SL, FLIP
@@ -16,15 +16,15 @@ atrMultSL     = input.float(0.5, 'SL Multiplier (ATR)', minval=0.1, step=0.1)
 riskReward    = input.float(3.0, 'Final R:R (TP3)', minval=1.0, step=0.5)
 confirmCandle = input.bool(true, 'Require candle confirmation on ENTRY bar')
 waitBars      = input.int(3, 'Bars to wait after cross', minval=0, maxval=12)
-requireAlign  = input.bool(true, 'Require structure align (bias matches side)', group='Filters')
+requireAlign  = input.bool(true, 'Block opposite structure (allow Building)', group='Filters')
 skipSqueeze   = input.bool(true, 'Skip entry if EMA squeeze', group='Filters')
 squeezeGap    = input.float(0.35, 'Squeeze threshold (EMA gap / ATR)', minval=0.05, step=0.05, group='Filters')
 requireRetest = input.bool(true, 'Require EMA / cross-zone retest (no blind chase)', group='Filters')
-maxChaseATR   = input.float(1.0, 'Max chase distance from slow EMA (ATR)', minval=0.25, step=0.25, group='Filters')
-entryLagBars  = input.int(2, 'Extra bars allowed after wait (then cancel)', minval=0, maxval=8, group='Filters')
-maxBodyATR    = input.float(1.2, 'Skip if entry candle body > ATR x', minval=0.4, step=0.1, group='Filters')
-minAtrPct     = input.float(0.10, 'Min ATR % of price (skip dead names)', minval=0.0, step=0.05, group='Filters')
-minVolMult    = input.float(0.50, 'Min volume vs 20-bar avg (0=off)', minval=0.0, step=0.1, group='Filters')
+maxChaseATR   = input.float(1.5, 'Max chase distance from slow EMA (ATR)', minval=0.25, step=0.25, group='Filters')
+entryLagBars  = input.int(5, 'Extra bars allowed after wait (then cancel)', minval=0, maxval=12, group='Filters')
+maxBodyATR    = input.float(1.5, 'Skip if entry candle body > ATR x', minval=0.4, step=0.1, group='Filters')
+minAtrPct     = input.float(0.08, 'Min ATR % of price (skip dead names)', minval=0.0, step=0.05, group='Filters')
+minVolMult    = input.float(0.0, 'Min volume vs 20-bar avg (0=off)', minval=0.0, step=0.1, group='Filters')
 rthOnly       = input.bool(false, 'US RTH only (0930-1600 exchange)', group='Filters')
 
 swingLen      = input.int(5, 'Swing length (structure)', minval=2, maxval=20, group='Structure')
@@ -145,17 +145,17 @@ if pendingDir != 0 and barsWaited > maxLag
     pendingRefHigh := na
     pendingRefLow := na
 
-alignLong  = not requireAlign or structBias == 1
-alignShort = not requireAlign or structBias == -1
+alignLong  = not requireAlign or structBias != -1   // allow bullish or Building
+alignShort = not requireAlign or structBias != 1    // allow bearish or Building
 sqOk       = not skipSqueeze or not inSqueeze
 
 emaHi = math.max(emaFast, emaSlow)
 emaLo = math.min(emaFast, emaSlow)
 bodySize = math.abs(close - open)
 
-// Hard retest: must tag EMA band or the cross-bar extreme (no waitBars bypass)
-callRetest = not requireRetest or low <= emaHi + atr * 0.15 or (not na(pendingRefLow) and low <= pendingRefLow + atr * 0.1)
-putRetest  = not requireRetest or high >= emaLo - atr * 0.15 or (not na(pendingRefHigh) and high >= pendingRefHigh - atr * 0.1)
+// Retest: tag EMA band or cross-bar extreme (slightly softer buffer)
+callRetest = not requireRetest or low <= emaHi + atr * 0.25 or (not na(pendingRefLow) and low <= pendingRefLow + atr * 0.2)
+putRetest  = not requireRetest or high >= emaLo - atr * 0.25 or (not na(pendingRefHigh) and high >= pendingRefHigh - atr * 0.2)
 
 callNotChase = atr > 0 ? (close - emaSlow) / atr <= maxChaseATR : true
 putNotChase  = atr > 0 ? (emaSlow - close) / atr <= maxChaseATR : true
@@ -164,9 +164,9 @@ putNotChase  = atr > 0 ? (emaSlow - close) / atr <= maxChaseATR : true
 callNotClimax = atr <= 0 or bodySize / atr <= maxBodyATR
 putNotClimax  = atr <= 0 or bodySize / atr <= maxBodyATR
 
-// Close must be on the correct side of the fast EMA (trend still intact)
-callTrendOk = close >= emaFast
-putTrendOk  = close <= emaFast
+// Stay on correct side of SLOW EMA so a fast-EMA retest can still fire
+callTrendOk = close >= emaSlow
+putTrendOk  = close <= emaSlow
 
 // Cross-ticker quality gates (ATR% + relative volume + optional RTH)
 atrPctOk = minAtrPct <= 0 or close <= 0 or (atr / close * 100.0) >= minAtrPct
@@ -181,15 +181,8 @@ readyShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLa
 blockedLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and not readyLong
 blockedShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and not readyShort
 
-// Cancel if already too extended from the cross reference
-if pendingDir == -1 and not na(pendingRefHigh) and atr > 0 and (pendingRefHigh - close) / atr > maxChaseATR
-    pendingDir := 0
-    pendingBar := na
-    pendingRefHigh := na
-if pendingDir == 1 and not na(pendingRefLow) and atr > 0 and (close - pendingRefLow) / atr > maxChaseATR
-    pendingDir := 0
-    pendingBar := na
-    pendingRefLow := na
+// Do NOT wipe pending during the wait on cross-bar distance — that killed almost all signals.
+// Chase is gated at entry via callNotChase / putNotChase (distance from slow EMA).
 
 var float entryPrice = na
 var float stopLoss   = na
