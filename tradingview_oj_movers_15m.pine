@@ -5,7 +5,7 @@ indicator('OJ 0DTE 15m', overlay=true, max_labels_count=500, max_lines_count=50)
 emaFastLen = input.int(5, 'Fast EMA')
 emaSlowLen = input.int(21, 'Slow EMA')
 atrLen     = input.int(14, 'ATR')
-atrMultSL  = input.float(0.5, 'SL ATR mult', step=0.1)
+atrMultSL  = input.float(0.85, 'SL ATR mult', minval=0.1, step=0.05, tooltip='Higher = more room under/over the entry candle so wicks do not stop you out.')
 tp1R       = input.float(0.5, 'TP1 R', minval=0.1, step=0.1)
 tp2R       = input.float(1.0, 'TP2 R', minval=0.2, step=0.1)
 tp3R       = input.float(1.5, 'TP3 R', minval=0.3, step=0.1)
@@ -151,7 +151,7 @@ if goCall
         flipHit := true
         inPos := false
     entry := close
-    // Tight ATR stop (ORB full-range stop pushed TPs too far to hit on 0DTE)
+    // ATR stop with buffer past the entry candle extreme (avoids wick stops)
     sl := low - atr * atrMultSL
     risk = entry - sl
     if risk > 0
