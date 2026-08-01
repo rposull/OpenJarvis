@@ -1,0 +1,375 @@
+//@version=6
+indicator('OJ Movers 15m — Keepers Scale (align+nosqz)', overlay=true, max_labels_count=500, max_lines_count=500)
+
+// ============================================
+// LOCKED BOT PLAYBOOK
+// Universe (best WR): TSLA · AMZN · SOXL   (skip MSTR / NVDA)
+// Entry : EMA 5/21 cross → wait 3 bars → structure ALIGNED → no EMA squeeze
+// Size  : open 3 lots | risk 2% equity to stop (outside TV)
+// Scale : TP1 (+1R) close 1 | TP2 (+2R) close 1 | TP3 (+3R) close last
+// Hard exits: SL, FLIP
+// Heads-up ONLY (do NOT auto-flatten): CHoCH, WARN FLIP, SQUEEZE, BOS
+// ============================================
+emaFastLen    = input.int(5, 'Fast EMA', minval=1)
+emaSlowLen    = input.int(21, 'Slow EMA', minval=1)
+atrLen        = input.int(14, 'ATR Period', minval=1)
+atrMultSL     = input.float(0.5, 'SL Multiplier (ATR)', minval=0.1, step=0.1)
+riskReward    = input.float(3.0, 'Final R:R (TP3)', minval=1.0, step=0.5)
+confirmCandle = input.bool(true, 'Require candle confirmation on ENTRY bar')
+waitBars      = input.int(3, 'Bars to wait after cross', minval=0, maxval=12)
+requireAlign  = input.bool(true, 'Require structure align (bias matches side)', group='Filters')
+skipSqueeze   = input.bool(true, 'Skip entry if EMA squeeze', group='Filters')
+squeezeGap    = input.float(0.35, 'Squeeze threshold (EMA gap / ATR)', minval=0.05, step=0.05, group='Filters')
+requireRetest = input.bool(true, 'Prefer EMA/zone retest (soft — still allows PUTs)', group='Filters')
+maxChaseATR   = input.float(2.0, 'Max chase distance (ATR)', minval=0.5, step=0.25, group='Filters')
+
+swingLen      = input.int(5, 'Swing length (structure)', minval=2, maxval=20, group='Structure')
+showStructure = input.bool(true, 'Show CHoCH / BOS marks', group='Structure')
+showSwings    = input.bool(true, 'Mark swing highs / lows', group='Structure')
+showEmas      = input.bool(true, 'Show EMAs', group='Display')
+showLevels    = input.bool(true, 'Show entry / SL / TP lines', group='Display')
+showPending   = input.bool(true, 'Show pending markers', group='Display')
+showTpMarks   = input.bool(true, 'Show TP1/TP2/TP3 hit marks', group='Display')
+
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+atr     = ta.atr(atrLen)
+
+bullTrend   = emaFast > emaSlow
+bearTrend   = emaFast < emaSlow
+trendChange = bullTrend != bullTrend[1]
+
+crossUpRaw = bullTrend and trendChange and (not confirmCandle or close > open)
+crossDnRaw = bearTrend and trendChange and (not confirmCandle or close < open)
+
+emaGap = atr > 0 ? math.abs(emaFast - emaSlow) / atr : 999.0
+inSqueeze = emaGap < squeezeGap
+
+// ============================================
+// MARKET STRUCTURE — CHoCH / BOS
+// ============================================
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastSH = na
+var float lastSL = na
+var int   structBias = 0
+var line  shLevel = na
+var line  slLevel = na
+
+chochBull = false
+chochBear = false
+bosBull   = false
+bosBear   = false
+
+if not na(ph)
+    lastSH := ph
+    if showSwings
+        label.new(bar_index - swingLen, ph, 'SH', style=label.style_label_down, color=color.new(color.gray, 70), textcolor=color.white, size=size.tiny)
+if not na(pl)
+    lastSL := pl
+    if showSwings
+        label.new(bar_index - swingLen, pl, 'SL', style=label.style_label_up, color=color.new(color.gray, 70), textcolor=color.white, size=size.tiny)
+
+if not na(lastSH) and close > lastSH and close[1] <= lastSH
+    if structBias == -1
+        chochBull := true
+        structBias := 1
+    else
+        bosBull := true
+        structBias := 1
+
+if not na(lastSL) and close < lastSL and close[1] >= lastSL
+    if structBias == 1
+        chochBear := true
+        structBias := -1
+    else
+        bosBear := true
+        structBias := -1
+
+if showStructure and not na(lastSH)
+    if na(shLevel)
+        shLevel := line.new(bar_index - 1, lastSH, bar_index + 1, lastSH, color=color.new(color.red, 50), style=line.style_dashed, width=1)
+    else
+        line.set_xy1(shLevel, bar_index - 20, lastSH)
+        line.set_xy2(shLevel, bar_index + 2, lastSH)
+if showStructure and not na(lastSL)
+    if na(slLevel)
+        slLevel := line.new(bar_index - 1, lastSL, bar_index + 1, lastSL, color=color.new(color.lime, 50), style=line.style_dashed, width=1)
+    else
+        line.set_xy1(slLevel, bar_index - 20, lastSL)
+        line.set_xy2(slLevel, bar_index + 2, lastSL)
+
+emaSqueezeEvent = atr > 0 and emaGap < squeezeGap and emaGap[1] >= squeezeGap
+
+// ============================================
+// PENDING CROSS → WAIT → FILTERED ENTRY
+// Puts: must retest the cross-bar high / EMA (rejection), not chase after the dump
+// ============================================
+var int pendingDir = 0
+var int pendingBar = na
+var float pendingRefHigh = na   // cross-bar high for PUT retest
+var float pendingRefLow = na    // cross-bar low for CALL retest
+
+if crossUpRaw
+    pendingDir := 1
+    pendingBar := bar_index
+    pendingRefLow := low
+    pendingRefHigh := na
+if crossDnRaw
+    pendingDir := -1
+    pendingBar := bar_index
+    pendingRefHigh := high
+    pendingRefLow := na
+
+if pendingDir == 1 and bearTrend
+    pendingDir := 0
+    pendingBar := na
+    pendingRefLow := na
+if pendingDir == -1 and bullTrend
+    pendingDir := 0
+    pendingBar := na
+    pendingRefHigh := na
+
+barsWaited = pendingDir != 0 and not na(pendingBar) ? bar_index - pendingBar : 0
+
+alignLong  = not requireAlign or structBias == 1
+// Soft short align: only block clear bullish structure (was blocking almost all PUTs)
+alignShort = not requireAlign or structBias != 1
+sqOk       = not skipSqueeze or not inSqueeze
+
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+
+// Soft retest — allows PUTs again (hard retest of cross-high was too rare)
+callRetest = not requireRetest or low <= emaFast or low <= emaSlow or lowerWick > atr * 0.1 or barsWaited == waitBars
+putRetest  = not requireRetest or high >= emaFast or high >= emaSlow or upperWick > atr * 0.1 or barsWaited == waitBars or (not na(pendingRefHigh) and high >= pendingRefHigh * 0.997)
+
+callNotChase = atr > 0 ? (close - emaSlow) / atr <= maxChaseATR : true
+putNotChase  = atr > 0 ? (emaSlow - close) / atr <= maxChaseATR : true
+
+readyLong  = pendingDir == 1 and barsWaited >= waitBars and bullTrend and (not confirmCandle or close > open) and alignLong and sqOk and callRetest and callNotChase
+readyShort = pendingDir == -1 and barsWaited >= waitBars and bearTrend and (not confirmCandle or close < open) and alignShort and sqOk and putRetest and putNotChase
+
+blockedLong  = pendingDir == 1 and barsWaited >= waitBars and bullTrend and not readyLong
+blockedShort = pendingDir == -1 and barsWaited >= waitBars and bearTrend and not readyShort
+
+// Only cancel if extremely extended
+if pendingDir == -1 and not na(pendingRefHigh) and atr > 0 and (pendingRefHigh - close) / atr > maxChaseATR + 1.5
+    pendingDir := 0
+    pendingBar := na
+    pendingRefHigh := na
+if pendingDir == 1 and not na(pendingRefLow) and atr > 0 and (close - pendingRefLow) / atr > maxChaseATR + 1.5
+    pendingDir := 0
+    pendingBar := na
+    pendingRefLow := na
+
+var float entryPrice = na
+var float stopLoss   = na
+var float tp1 = na
+var float tp2 = na
+var float tp3 = na
+var float riskAmt = na
+var bool  inPosition = false
+var string positionType = ''
+var string tradeSide = ''      // stays set through TP hits (for marks)
+var bool  tp1Done = false
+var bool  tp2Done = false
+var bool  tp3Done = false
+
+tp1Hit = false
+tp2Hit = false
+tp3Hit = false
+slHit = false
+invalidated = false
+showCall = false
+showPut = false
+
+if inPosition and positionType == 'CALL'
+    if not tp1Done and high >= tp1
+        tp1Hit := true
+        tp1Done := true
+    if not tp2Done and high >= tp2
+        tp2Hit := true
+        tp2Done := true
+    if not tp3Done and high >= tp3
+        tp3Hit := true
+        tp3Done := true
+        inPosition := false
+        positionType := ''
+    if inPosition and low <= stopLoss
+        slHit := true
+        inPosition := false
+        positionType := ''
+
+if inPosition and positionType == 'PUT'
+    if not tp1Done and low <= tp1
+        tp1Hit := true
+        tp1Done := true
+    if not tp2Done and low <= tp2
+        tp2Hit := true
+        tp2Done := true
+    if not tp3Done and low <= tp3
+        tp3Hit := true
+        tp3Done := true
+        inPosition := false
+        positionType := ''
+    if inPosition and high >= stopLoss
+        slHit := true
+        inPosition := false
+        positionType := ''
+
+enterCall = readyLong and (not inPosition or positionType != 'CALL')
+enterPut  = readyShort and (not inPosition or positionType != 'PUT')
+
+if enterCall
+    if inPosition and positionType == 'PUT'
+        invalidated := true
+        inPosition := false
+    entryPrice := close
+    stopLoss := low - atr * atrMultSL
+    riskAmt := entryPrice - stopLoss
+    if riskAmt > 0
+        tp1 := entryPrice + riskAmt * 1.0
+        tp2 := entryPrice + riskAmt * 2.0
+        tp3 := entryPrice + riskAmt * riskReward
+        inPosition := true
+        positionType := 'CALL'
+        tradeSide := 'CALL'
+        showCall := true
+        tp1Done := false
+        tp2Done := false
+        tp3Done := false
+        pendingDir := 0
+        pendingBar := na
+        pendingRefLow := na
+        pendingRefHigh := na
+
+if enterPut
+    if inPosition and positionType == 'CALL'
+        invalidated := true
+        inPosition := false
+    entryPrice := close
+    stopLoss := high + atr * atrMultSL
+    riskAmt := stopLoss - entryPrice
+    if riskAmt > 0
+        tp1 := entryPrice - riskAmt * 1.0
+        tp2 := entryPrice - riskAmt * 2.0
+        tp3 := entryPrice - riskAmt * riskReward
+        inPosition := true
+        positionType := 'PUT'
+        tradeSide := 'PUT'
+        showPut := true
+        tp1Done := false
+        tp2Done := false
+        tp3Done := false
+        pendingDir := 0
+        pendingBar := na
+        pendingRefHigh := na
+        pendingRefLow := na
+
+warnFlipLong  = inPosition and positionType == 'CALL' and chochBear
+warnFlipShort = inPosition and positionType == 'PUT' and chochBull
+
+// ============================================
+// VISUALS
+// ============================================
+plot(showEmas ? emaFast : na, 'Fast EMA (5)', color=color.new(color.teal, 0), linewidth=2)
+plot(showEmas ? emaSlow : na, 'Slow EMA (21)', color=color.new(color.orange, 0), linewidth=2)
+
+plotshape(showStructure and chochBull, 'CHoCH Bull', shape.labelup, location.belowbar, color.new(#00e5ff, 0), text='CHoCH↑', textcolor=color.black, size=size.small)
+plotshape(showStructure and chochBear, 'CHoCH Bear', shape.labeldown, location.abovebar, color.new(#ff9100, 0), text='CHoCH↓', textcolor=color.black, size=size.small)
+plotshape(showStructure and bosBull, 'BOS Bull', shape.triangleup, location.belowbar, color.new(#76ff03, 30), size=size.tiny)
+plotshape(showStructure and bosBear, 'BOS Bear', shape.triangledown, location.abovebar, color.new(#ff5252, 30), size=size.tiny)
+plotshape(showStructure and emaSqueezeEvent, 'EMA Squeeze', shape.diamond, location.absolute, color.new(color.fuchsia, 30), text='SQZ', textcolor=color.white, size=size.tiny)
+
+pendingMark = showPending and pendingDir != 0 and not inPosition and not showCall and not showPut and not blockedLong and not blockedShort
+plotshape(pendingMark and pendingDir == 1, 'Pending CALL', shape.triangleup, location.belowbar, color.new(color.teal, 40), size=size.tiny)
+plotshape(pendingMark and pendingDir == -1, 'Pending PUT', shape.triangledown, location.abovebar, color.new(color.orange, 40), size=size.tiny)
+plotshape(showPending and blockedLong, 'Blocked CALL', shape.xcross, location.belowbar, color.new(color.gray, 40), text='BLK', size=size.tiny)
+plotshape(showPending and blockedShort, 'Blocked PUT', shape.xcross, location.abovebar, color.new(color.gray, 40), text='BLK', size=size.tiny)
+
+plotshape(showCall, 'CALL', shape.labelup, location.belowbar, color.new(color.lime, 0), text='CALL', textcolor=color.white, size=size.small)
+plotshape(showPut, 'PUT', shape.labeldown, location.abovebar, color.new(color.red, 0), text='PUT', textcolor=color.white, size=size.small)
+
+// Live TP/SL level plots (visible for both CALL and PUT)
+plot(showLevels and inPosition ? entryPrice : na, 'Entry', color=color.new(color.white, 30), style=plot.style_linebr, linewidth=1)
+plot(showLevels and inPosition ? stopLoss : na, 'Stop', color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plot(showLevels and inPosition ? tp1 : na, 'TP1 level', color=color.new(#69f0ae, 0), style=plot.style_linebr, linewidth=1)
+plot(showLevels and inPosition ? tp2 : na, 'TP2 level', color=color.new(#00e676, 0), style=plot.style_linebr, linewidth=1)
+plot(showLevels and inPosition ? tp3 : na, 'TP3 level', color=color.new(#00c853, 0), style=plot.style_linebr, linewidth=2)
+
+// TP hit labels at the actual TP price (works for PUTs below entry)
+if showTpMarks and tp1Hit and not na(tp1)
+    label.new(bar_index, tp1, 'TP1', style=tradeSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#69f0ae, 0), textcolor=color.black, size=size.small)
+if showTpMarks and tp2Hit and not na(tp2)
+    label.new(bar_index, tp2, 'TP2', style=tradeSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#00e676, 0), textcolor=color.black, size=size.small)
+if showTpMarks and tp3Hit and not na(tp3)
+    label.new(bar_index, tp3, 'TP3', style=tradeSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#00c853, 0), textcolor=color.white, size=size.normal)
+
+plotshape(slHit, 'SL', shape.xcross, location.belowbar, color.new(#ff1744, 0), text='SL', textcolor=color.white, size=size.tiny)
+plotshape(invalidated, 'INV', shape.diamond, location.abovebar, color.new(color.yellow, 0), text='INV', size=size.tiny)
+plotshape(warnFlipLong or warnFlipShort, 'WARN FLIP', shape.xcross, location.abovebar, color.new(#ff6d00, 0), text='WARN', textcolor=color.white, size=size.small)
+
+var table info = table.new(position.top_right, 2, 9, bgcolor=color.new(color.black, 80), border_width=1)
+if barstate.islast
+    table.cell(info, 0, 0, 'Universe', text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 0, 'TSLA AMZN SOXL', text_color=color.aqua, text_size=size.small)
+    table.cell(info, 0, 1, 'Status', text_color=color.gray, text_size=size.small)
+    statusTxt = inPosition ? positionType : (pendingDir == 1 ? 'Wait CALL' : pendingDir == -1 ? 'Wait PUT' : 'Flat')
+    table.cell(info, 1, 1, statusTxt, text_color=color.yellow, text_size=size.small)
+    table.cell(info, 0, 2, 'Structure', text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 2, structBias == 1 ? 'Bullish' : structBias == -1 ? 'Bearish' : 'Building', text_color=structBias == 1 ? color.lime : structBias == -1 ? color.red : color.gray, text_size=size.small)
+    table.cell(info, 0, 3, 'Squeeze', text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 3, inSqueeze ? 'YES (entries blocked)' : 'No', text_color=inSqueeze ? color.fuchsia : color.gray, text_size=size.small)
+    if inPosition
+        table.cell(info, 0, 4, 'Entry', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 4, str.tostring(entryPrice, format.mintick), text_color=color.white, text_size=size.small)
+        table.cell(info, 0, 5, 'TP1 / TP2 / TP3', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 5, str.tostring(tp1, format.mintick) + ' / ' + str.tostring(tp2, format.mintick) + ' / ' + str.tostring(tp3, format.mintick), text_color=color.lime, text_size=size.small)
+        table.cell(info, 0, 6, 'SL', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 6, str.tostring(stopLoss, format.mintick), text_color=color.red, text_size=size.small)
+        table.cell(info, 0, 7, 'Hits', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 7, (tp1Done ? 'TP1 ' : '') + (tp2Done ? 'TP2 ' : '') + (tp3Done ? 'TP3' : ''), text_color=color.lime, text_size=size.small)
+        table.cell(info, 0, 8, 'Bot', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 8, '3 lots · scale TP1/2/3 · CHoCH=heads-up', text_color=color.orange, text_size=size.small)
+
+// ============================================
+// ALERTS
+// ============================================
+alertcondition(showCall, title='ENTRY CALL', message='ENTRY CALL {{ticker}} 15m price={{close}}')
+alertcondition(showPut, title='ENTRY PUT', message='ENTRY PUT {{ticker}} 15m price={{close}}')
+alertcondition(tp1Hit, title='TP1 1R', message='TP1 {{ticker}} 15m price={{close}}')
+alertcondition(tp2Hit, title='TP2 2R', message='TP2 {{ticker}} 15m price={{close}}')
+alertcondition(tp3Hit, title='TP3 3R', message='TP3 {{ticker}} 15m price={{close}}')
+alertcondition(slHit, title='STOP LOSS', message='SL {{ticker}} 15m price={{close}}')
+alertcondition(invalidated, title='FLIP EXIT', message='FLIP {{ticker}} 15m price={{close}}')
+alertcondition(chochBull, title='HEADSUP CHoCH Bull', message='HEADSUP CHoCH BULL {{ticker}} — do not auto-exit')
+alertcondition(chochBear, title='HEADSUP CHoCH Bear', message='HEADSUP CHoCH BEAR {{ticker}} — do not auto-exit')
+alertcondition(bosBull, title='HEADSUP BOS Bull', message='HEADSUP BOS BULL {{ticker}}')
+alertcondition(bosBear, title='HEADSUP BOS Bear', message='HEADSUP BOS BEAR {{ticker}}')
+alertcondition(warnFlipLong or warnFlipShort, title='HEADSUP WARN FLIP', message='HEADSUP WARN FLIP {{ticker}} — heads-up only')
+alertcondition(emaSqueezeEvent, title='HEADSUP SQUEEZE', message='HEADSUP SQUEEZE {{ticker}} — flip risk rising')
+
+if showCall
+    alert('ENTRY CALL ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+if showPut
+    alert('ENTRY PUT ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+if tp1Hit
+    alert('TP1 ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if tp2Hit
+    alert('TP2 ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if tp3Hit
+    alert('TP3 ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if slHit
+    alert('SL ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if invalidated
+    alert('FLIP ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if chochBull
+    alert('HEADSUP CHoCH BULL ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if chochBear
+    alert('HEADSUP CHoCH BEAR ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if warnFlipLong or warnFlipShort
+    alert('HEADSUP WARN FLIP ' + syminfo.ticker + ' against ' + positionType + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+if emaSqueezeEvent
+    alert('HEADSUP SQUEEZE ' + syminfo.ticker, alert.freq_once_per_bar_close)
