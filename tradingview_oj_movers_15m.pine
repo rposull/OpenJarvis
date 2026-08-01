@@ -1,10 +1,11 @@
 //@version=6
-indicator('OJ Scale 15m — 0DTE', overlay=true, max_labels_count=500, max_lines_count=500)
+indicator('OJ Scale 15m — 0DTE + ORB', overlay=true, max_labels_count=500, max_lines_count=500)
 
 // ============================================
 // BOT PLAYBOOK (0DTE — same-day only, ATR-normalized)
-// Entry : EMA 5/21 cross → wait 3 → no opposite structure → EMA retest → no squeeze/chase/climax
-// Session: US RTH window only · flat by cutoff · no overnight · day-break reset
+// Morning: ORB break of opening range (helps ensure a daily trade)
+// Later  : EMA 5/21 cross → wait 3 → retest → no squeeze/chase/climax
+// Session: US RTH window · flat by cutoff · no overnight · day-break reset
 // Size  : open 3 lots | risk 2% equity to stop (outside TV)
 // Scale : TP1 (+1R) close 1 | TP2 (+2R) close 1 | TP3 (+3R) close last
 // Hard exits: SL, FLIP, EOD / DAY BREAK
@@ -32,6 +33,15 @@ flatHour      = input.int(15, 'Force-flat hour (NY)', minval=0, maxval=23, group
 flatMinute    = input.int(45, 'Force-flat minute (NY)', minval=0, maxval=59, group='0DTE')
 showDayBreaks = input.bool(true, 'Show day-break lines', group='0DTE')
 shadeOffSess  = input.bool(true, 'Shade outside trade window', group='0DTE')
+oneEntryDay   = input.bool(false, 'Max 1 entry per day', group='0DTE', tooltip='Off = ORB morning + EMA later both allowed.')
+
+useOrb        = input.bool(true, 'Enable ORB morning entries', group='ORB')
+orbMinutes    = input.int(15, 'Opening range minutes', options=[15, 30], group='ORB')
+orbUntilHour  = input.int(11, 'ORB entries until hour (NY)', minval=10, maxval=15, group='ORB')
+minOrbATR     = input.float(0.20, 'Min ORB range (ATR x)', minval=0.05, step=0.05, group='ORB')
+maxOrbATR     = input.float(2.50, 'Max ORB range (ATR x)', minval=0.5, step=0.25, group='ORB')
+orbStopInside = input.bool(true, 'ORB stop = other side of range', group='ORB')
+showOrbLevels = input.bool(true, 'Show ORB high / low', group='ORB')
 
 swingLen      = input.int(5, 'Swing length (structure)', minval=2, maxval=20, group='Structure')
 showStructure = input.bool(true, 'Show CHoCH / BOS marks', group='Structure')
@@ -49,6 +59,9 @@ nyH = hour(time, nyTz)
 nyM = minute(time, nyTz)
 pastFlat = nyH > flatHour or (nyH == flatHour and nyM >= flatMinute)
 canEnter = inTradeWindow and not pastFlat
+orbBuildSession = orbMinutes == 15 ? '0930-0945' : '0930-1000'
+inOrbBuild = not na(time(timeframe.period, orbBuildSession, nyTz))
+orbEntryOk = canEnter and (nyH < orbUntilHour or (nyH == orbUntilHour and nyM == 0))
 
 emaFast = ta.ema(close, emaFastLen)
 emaSlow = ta.ema(close, emaSlowLen)
@@ -120,6 +133,34 @@ if showStructure and not na(lastSL)
         line.set_xy2(slLevel, bar_index + 2, lastSL)
 
 emaSqueezeEvent = atr > 0 and emaGap < squeezeGap and emaGap[1] >= squeezeGap
+
+// ============================================
+// ORB — Opening Range Breakout (morning daily driver)
+// ============================================
+var float orbHigh = na
+var float orbLow = na
+var bool orbReady = false
+var bool orbUsed = false
+var bool tradedToday = false
+var string entryTag = ''
+
+if newDay
+    orbHigh := na
+    orbLow := na
+    orbReady := false
+    orbUsed := false
+    tradedToday := false
+
+if inOrbBuild
+    orbHigh := na(orbHigh) ? high : math.max(orbHigh, high)
+    orbLow := na(orbLow) ? low : math.min(orbLow, low)
+else if not na(orbHigh) and not na(orbLow) and not orbReady
+    orbReady := true
+
+orbWidth = not na(orbHigh) and not na(orbLow) ? orbHigh - orbLow : na
+orbWidthOk = atr > 0 and not na(orbWidth) and orbWidth >= atr * minOrbATR and orbWidth <= atr * maxOrbATR
+orbBreakCall = useOrb and orbReady and not orbUsed and orbEntryOk and orbWidthOk and close > orbHigh and (not confirmCandle or close > open)
+orbBreakPut  = useOrb and orbReady and not orbUsed and orbEntryOk and orbWidthOk and close < orbLow and (not confirmCandle or close < open)
 
 // ============================================
 // PENDING CROSS → WAIT → FILTERED ENTRY
@@ -199,6 +240,10 @@ tradeOk  = atrPctOk and volOk and canEnter
 readyLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and (not confirmCandle or close > open) and alignLong and sqOk and callRetest and callNotChase and callNotClimax and callTrendOk and tradeOk
 readyShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and (not confirmCandle or close < open) and alignShort and sqOk and putRetest and putNotChase and putNotClimax and putTrendOk and tradeOk
 
+daySlotOk = not oneEntryDay or not tradedToday
+orbCall = orbBreakCall and daySlotOk
+orbPut  = orbBreakPut and daySlotOk
+
 blockedLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and not readyLong
 blockedShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and not readyShort
 
@@ -271,15 +316,21 @@ if inPosition and positionType == 'PUT'
         inPosition := false
         positionType := ''
 
-enterCall = readyLong and (not inPosition or positionType != 'CALL')
-enterPut  = readyShort and (not inPosition or positionType != 'PUT')
+enterCall = (orbCall or readyLong) and daySlotOk and (not inPosition or positionType != 'CALL')
+enterPut  = (orbPut or readyShort) and daySlotOk and (not inPosition or positionType != 'PUT')
+// Prefer ORB when both fire same bar
+useOrbCall = enterCall and orbCall
+useOrbPut  = enterPut and orbPut
 
 if enterCall
     if inPosition and positionType == 'PUT'
         invalidated := true
         inPosition := false
     entryPrice := close
-    stopLoss := low - atr * atrMultSL
+    if useOrbCall and orbStopInside and not na(orbLow)
+        stopLoss := orbLow - atr * atrMultSL * 0.25
+    else
+        stopLoss := low - atr * atrMultSL
     riskAmt := entryPrice - stopLoss
     if riskAmt > 0
         tp1 := entryPrice + riskAmt * 1.0
@@ -288,7 +339,11 @@ if enterCall
         inPosition := true
         positionType := 'CALL'
         tradeSide := 'CALL'
+        entryTag := useOrbCall ? 'ORB' : 'EMA'
         showCall := true
+        tradedToday := true
+        if useOrbCall
+            orbUsed := true
         tp1Done := false
         tp2Done := false
         tp3Done := false
@@ -302,7 +357,10 @@ if enterPut
         invalidated := true
         inPosition := false
     entryPrice := close
-    stopLoss := high + atr * atrMultSL
+    if useOrbPut and orbStopInside and not na(orbHigh)
+        stopLoss := orbHigh + atr * atrMultSL * 0.25
+    else
+        stopLoss := high + atr * atrMultSL
     riskAmt := stopLoss - entryPrice
     if riskAmt > 0
         tp1 := entryPrice - riskAmt * 1.0
@@ -311,7 +369,11 @@ if enterPut
         inPosition := true
         positionType := 'PUT'
         tradeSide := 'PUT'
+        entryTag := useOrbPut ? 'ORB' : 'EMA'
         showPut := true
+        tradedToday := true
+        if useOrbPut
+            orbUsed := true
         tp1Done := false
         tp2Done := false
         tp3Done := false
@@ -327,12 +389,15 @@ warnFlipShort = inPosition and positionType == 'PUT' and chochBull
 // VISUALS
 // ============================================
 bgcolor(shadeOffSess and not inTradeWindow ? color.new(color.gray, 92) : na, title='Off 0DTE window')
+bgcolor(useOrb and inOrbBuild ? color.new(#26c6da, 92) : na, title='ORB build')
 if showDayBreaks and newDay
     line.new(bar_index, low, bar_index, high, extend=extend.both, color=color.new(#90a4ae, 35), style=line.style_dotted, width=1)
     label.new(bar_index, high, 'DAY', style=label.style_label_down, color=color.new(#455a64, 20), textcolor=color.white, size=size.tiny)
 
 plot(showEmas ? emaFast : na, 'Fast EMA (5)', color=color.new(color.teal, 0), linewidth=2)
 plot(showEmas ? emaSlow : na, 'Slow EMA (21)', color=color.new(color.orange, 0), linewidth=2)
+plot(showOrbLevels and orbReady and canEnter ? orbHigh : na, 'ORB High', color=color.new(#00bcd4, 0), style=plot.style_linebr, linewidth=2)
+plot(showOrbLevels and orbReady and canEnter ? orbLow : na, 'ORB Low', color=color.new(#ff7043, 0), style=plot.style_linebr, linewidth=2)
 
 plotshape(showStructure and chochBull, 'CHoCH Bull', shape.labelup, location.belowbar, color.new(#00e5ff, 0), text='CHoCH↑', textcolor=color.black, size=size.small)
 plotshape(showStructure and chochBear, 'CHoCH Bear', shape.labeldown, location.abovebar, color.new(#ff9100, 0), text='CHoCH↓', textcolor=color.black, size=size.small)
@@ -348,6 +413,8 @@ plotshape(showPending and blockedShort, 'Blocked PUT', shape.xcross, location.ab
 
 plotshape(showCall, 'CALL', shape.labelup, location.belowbar, color.new(color.lime, 0), text='CALL', textcolor=color.white, size=size.small)
 plotshape(showPut, 'PUT', shape.labeldown, location.abovebar, color.new(color.red, 0), text='PUT', textcolor=color.white, size=size.small)
+plotshape(showCall and entryTag == 'ORB', 'CALL ORB', shape.circle, location.belowbar, color.new(#00bcd4, 0), size=size.tiny)
+plotshape(showPut and entryTag == 'ORB', 'PUT ORB', shape.circle, location.abovebar, color.new(#ff7043, 0), size=size.tiny)
 
 // Live TP/SL level plots (visible for both CALL and PUT)
 plot(showLevels and inPosition ? entryPrice : na, 'Entry', color=color.new(color.white, 30), style=plot.style_linebr, linewidth=1)
@@ -372,9 +439,9 @@ plotshape(warnFlipLong or warnFlipShort, 'WARN FLIP', shape.xcross, location.abo
 var table info = table.new(position.top_right, 2, 10, bgcolor=color.new(color.black, 80), border_width=1)
 if barstate.islast
     table.cell(info, 0, 0, 'Symbol', text_color=color.gray, text_size=size.small)
-    table.cell(info, 1, 0, syminfo.ticker + ' · 0DTE', text_color=color.aqua, text_size=size.small)
+    table.cell(info, 1, 0, syminfo.ticker + ' · 0DTE+ORB', text_color=color.aqua, text_size=size.small)
     table.cell(info, 0, 1, 'Status', text_color=color.gray, text_size=size.small)
-    statusTxt = inPosition ? positionType : (pendingDir == 1 ? 'Wait CALL' : pendingDir == -1 ? 'Wait PUT' : (pastFlat ? 'Flat·EOD' : 'Flat'))
+    statusTxt = inPosition ? (positionType + (entryTag != '' ? '·' + entryTag : '')) : (pendingDir == 1 ? 'Wait CALL' : pendingDir == -1 ? 'Wait PUT' : (orbReady and not orbUsed ? 'ORB ready' : (pastFlat ? 'Flat·EOD' : 'Flat')))
     table.cell(info, 1, 1, statusTxt, text_color=color.yellow, text_size=size.small)
     table.cell(info, 0, 2, 'Structure', text_color=color.gray, text_size=size.small)
     table.cell(info, 1, 2, structBias == 1 ? 'Bullish' : structBias == -1 ? 'Bearish' : 'Building', text_color=structBias == 1 ? color.lime : structBias == -1 ? color.red : color.gray, text_size=size.small)
@@ -393,7 +460,7 @@ if barstate.islast
         table.cell(info, 0, 8, 'Hits', text_color=color.gray, text_size=size.small)
         table.cell(info, 1, 8, (tp1Done ? 'TP1 ' : '') + (tp2Done ? 'TP2 ' : '') + (tp3Done ? 'TP3' : ''), text_color=color.lime, text_size=size.small)
         table.cell(info, 0, 9, 'Bot', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 9, '0DTE · flat ' + str.tostring(flatHour) + ':' + (flatMinute < 10 ? '0' : '') + str.tostring(flatMinute) + ' NY', text_color=color.orange, text_size=size.small)
+        table.cell(info, 1, 9, 'ORB AM · EMA later · flat ' + str.tostring(flatHour) + ':' + (flatMinute < 10 ? '0' : '') + str.tostring(flatMinute), text_color=color.orange, text_size=size.small)
 
 // ============================================
 // ALERTS
@@ -414,9 +481,9 @@ alertcondition(warnFlipLong or warnFlipShort, title='HEADSUP WARN FLIP', message
 alertcondition(emaSqueezeEvent, title='HEADSUP SQUEEZE', message='HEADSUP SQUEEZE {{ticker}} — flip risk rising')
 
 if showCall
-    alert('ENTRY CALL ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+    alert('ENTRY CALL ' + entryTag + ' ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
 if showPut
-    alert('ENTRY PUT ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+    alert('ENTRY PUT ' + entryTag + ' ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
 if tp1Hit
     alert('TP1 ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
 if tp2Hit
