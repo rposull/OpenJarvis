@@ -1,9 +1,8 @@
 //@version=6
-indicator('OJ Movers 15m — Keepers Scale (align+nosqz)', overlay=true, max_labels_count=500, max_lines_count=500)
+indicator('OJ Scale 15m — Any Stock', overlay=true, max_labels_count=500, max_lines_count=500)
 
 // ============================================
-// LOCKED BOT PLAYBOOK
-// Universe (best WR): TSLA · AMZN · SOXL   (skip MSTR / NVDA)
+// BOT PLAYBOOK (any liquid stock / ETF — ATR-normalized)
 // Entry : EMA 5/21 cross → wait 3 bars → ALIGNED structure → EMA retest → no chase/climax → no squeeze
 // Size  : open 3 lots | risk 2% equity to stop (outside TV)
 // Scale : TP1 (+1R) close 1 | TP2 (+2R) close 1 | TP3 (+3R) close last
@@ -24,6 +23,9 @@ requireRetest = input.bool(true, 'Require EMA / cross-zone retest (no blind chas
 maxChaseATR   = input.float(1.0, 'Max chase distance from slow EMA (ATR)', minval=0.25, step=0.25, group='Filters')
 entryLagBars  = input.int(2, 'Extra bars allowed after wait (then cancel)', minval=0, maxval=8, group='Filters')
 maxBodyATR    = input.float(1.2, 'Skip if entry candle body > ATR x', minval=0.4, step=0.1, group='Filters')
+minAtrPct     = input.float(0.10, 'Min ATR % of price (skip dead names)', minval=0.0, step=0.05, group='Filters')
+minVolMult    = input.float(0.50, 'Min volume vs 20-bar avg (0=off)', minval=0.0, step=0.1, group='Filters')
+rthOnly       = input.bool(false, 'US RTH only (0930-1600 exchange)', group='Filters')
 
 swingLen      = input.int(5, 'Swing length (structure)', minval=2, maxval=20, group='Structure')
 showStructure = input.bool(true, 'Show CHoCH / BOS marks', group='Structure')
@@ -166,8 +168,15 @@ putNotClimax  = atr <= 0 or bodySize / atr <= maxBodyATR
 callTrendOk = close >= emaFast
 putTrendOk  = close <= emaFast
 
-readyLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and (not confirmCandle or close > open) and alignLong and sqOk and callRetest and callNotChase and callNotClimax and callTrendOk
-readyShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and (not confirmCandle or close < open) and alignShort and sqOk and putRetest and putNotChase and putNotClimax and putTrendOk
+// Cross-ticker quality gates (ATR% + relative volume + optional RTH)
+atrPctOk = minAtrPct <= 0 or close <= 0 or (atr / close * 100.0) >= minAtrPct
+volAvg20 = ta.sma(volume, 20)
+volOk    = minVolMult <= 0 or na(volAvg20) or volAvg20 <= 0 or volume >= volAvg20 * minVolMult
+inRth    = not rthOnly or not na(time(timeframe.period, '0930-1600', syminfo.timezone))
+tradeOk  = atrPctOk and volOk and inRth
+
+readyLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and (not confirmCandle or close > open) and alignLong and sqOk and callRetest and callNotChase and callNotClimax and callTrendOk and tradeOk
+readyShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and (not confirmCandle or close < open) and alignShort and sqOk and putRetest and putNotChase and putNotClimax and putTrendOk and tradeOk
 
 blockedLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and not readyLong
 blockedShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and not readyShort
@@ -329,10 +338,10 @@ plotshape(slHit, 'SL', shape.xcross, location.belowbar, color.new(#ff1744, 0), t
 plotshape(invalidated, 'INV', shape.diamond, location.abovebar, color.new(color.yellow, 0), text='INV', size=size.tiny)
 plotshape(warnFlipLong or warnFlipShort, 'WARN FLIP', shape.xcross, location.abovebar, color.new(#ff6d00, 0), text='WARN', textcolor=color.white, size=size.small)
 
-var table info = table.new(position.top_right, 2, 9, bgcolor=color.new(color.black, 80), border_width=1)
+var table info = table.new(position.top_right, 2, 10, bgcolor=color.new(color.black, 80), border_width=1)
 if barstate.islast
-    table.cell(info, 0, 0, 'Universe', text_color=color.gray, text_size=size.small)
-    table.cell(info, 1, 0, 'TSLA AMZN SOXL', text_color=color.aqua, text_size=size.small)
+    table.cell(info, 0, 0, 'Symbol', text_color=color.gray, text_size=size.small)
+    table.cell(info, 1, 0, syminfo.ticker, text_color=color.aqua, text_size=size.small)
     table.cell(info, 0, 1, 'Status', text_color=color.gray, text_size=size.small)
     statusTxt = inPosition ? positionType : (pendingDir == 1 ? 'Wait CALL' : pendingDir == -1 ? 'Wait PUT' : 'Flat')
     table.cell(info, 1, 1, statusTxt, text_color=color.yellow, text_size=size.small)
@@ -340,17 +349,20 @@ if barstate.islast
     table.cell(info, 1, 2, structBias == 1 ? 'Bullish' : structBias == -1 ? 'Bearish' : 'Building', text_color=structBias == 1 ? color.lime : structBias == -1 ? color.red : color.gray, text_size=size.small)
     table.cell(info, 0, 3, 'Squeeze', text_color=color.gray, text_size=size.small)
     table.cell(info, 1, 3, inSqueeze ? 'YES (entries blocked)' : 'No', text_color=inSqueeze ? color.fuchsia : color.gray, text_size=size.small)
+    table.cell(info, 0, 4, 'Quality', text_color=color.gray, text_size=size.small)
+    qTxt = (atrPctOk ? 'ATR✓ ' : 'ATR✗ ') + (volOk ? 'Vol✓ ' : 'Vol✗ ') + (inRth ? 'Ses✓' : 'Ses✗')
+    table.cell(info, 1, 4, qTxt, text_color=tradeOk ? color.lime : color.orange, text_size=size.small)
     if inPosition
-        table.cell(info, 0, 4, 'Entry', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 4, str.tostring(entryPrice, format.mintick), text_color=color.white, text_size=size.small)
-        table.cell(info, 0, 5, 'TP1 / TP2 / TP3', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 5, str.tostring(tp1, format.mintick) + ' / ' + str.tostring(tp2, format.mintick) + ' / ' + str.tostring(tp3, format.mintick), text_color=color.lime, text_size=size.small)
-        table.cell(info, 0, 6, 'SL', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 6, str.tostring(stopLoss, format.mintick), text_color=color.red, text_size=size.small)
-        table.cell(info, 0, 7, 'Hits', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 7, (tp1Done ? 'TP1 ' : '') + (tp2Done ? 'TP2 ' : '') + (tp3Done ? 'TP3' : ''), text_color=color.lime, text_size=size.small)
-        table.cell(info, 0, 8, 'Bot', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 8, '3 lots · scale TP1/2/3 · CHoCH=heads-up', text_color=color.orange, text_size=size.small)
+        table.cell(info, 0, 5, 'Entry', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 5, str.tostring(entryPrice, format.mintick), text_color=color.white, text_size=size.small)
+        table.cell(info, 0, 6, 'TP1 / TP2 / TP3', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 6, str.tostring(tp1, format.mintick) + ' / ' + str.tostring(tp2, format.mintick) + ' / ' + str.tostring(tp3, format.mintick), text_color=color.lime, text_size=size.small)
+        table.cell(info, 0, 7, 'SL', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 7, str.tostring(stopLoss, format.mintick), text_color=color.red, text_size=size.small)
+        table.cell(info, 0, 8, 'Hits', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 8, (tp1Done ? 'TP1 ' : '') + (tp2Done ? 'TP2 ' : '') + (tp3Done ? 'TP3' : ''), text_color=color.lime, text_size=size.small)
+        table.cell(info, 0, 9, 'Bot', text_color=color.gray, text_size=size.small)
+        table.cell(info, 1, 9, 'Any ticker · 3 lots · scale TP1/2/3', text_color=color.orange, text_size=size.small)
 
 // ============================================
 // ALERTS
