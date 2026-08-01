@@ -6,7 +6,9 @@ emaFastLen = input.int(5, 'Fast EMA')
 emaSlowLen = input.int(21, 'Slow EMA')
 atrLen     = input.int(14, 'ATR')
 atrMultSL  = input.float(0.5, 'SL ATR mult', step=0.1)
-rr         = input.float(3.0, 'TP3 R:R', step=0.5)
+tp1R       = input.float(0.5, 'TP1 R', minval=0.1, step=0.1)
+tp2R       = input.float(1.0, 'TP2 R', minval=0.2, step=0.1)
+tp3R       = input.float(1.5, 'TP3 R', minval=0.3, step=0.1)
 waitBars   = input.int(3, 'EMA wait bars', minval=0, maxval=8)
 orbMins    = input.int(15, 'ORB minutes', options=[15, 30])
 flatHH     = input.int(15, 'Flat hour NY')
@@ -149,12 +151,13 @@ if goCall
         flipHit := true
         inPos := false
     entry := close
-    sl := fromOrbCall and not na(orbLo) ? orbLo - atr * atrMultSL * 0.25 : low - atr * atrMultSL
+    // Tight ATR stop (ORB full-range stop pushed TPs too far to hit on 0DTE)
+    sl := low - atr * atrMultSL
     risk = entry - sl
     if risk > 0
-        tp1 := entry + risk
-        tp2 := entry + risk * 2
-        tp3 := entry + risk * rr
+        tp1 := entry + risk * tp1R
+        tp2 := entry + risk * tp2R
+        tp3 := entry + risk * tp3R
         inPos := true
         side := 'CALL'
         markSide := 'CALL'
@@ -166,7 +169,6 @@ if goCall
         pend := 0
         if orbCall
             orbUsed := true
-        // Mark TP targets on the entry bar
         label.new(bar_index, tp1, 'TP1', style=label.style_label_left, color=color.new(#69f0ae, 0), textcolor=color.black, size=size.tiny)
         label.new(bar_index, tp2, 'TP2', style=label.style_label_left, color=color.new(#00e676, 0), textcolor=color.black, size=size.tiny)
         label.new(bar_index, tp3, 'TP3', style=label.style_label_left, color=color.new(#00c853, 0), textcolor=color.white, size=size.tiny)
@@ -176,12 +178,12 @@ if goPut
         flipHit := true
         inPos := false
     entry := close
-    sl := fromOrbPut and not na(orbHi) ? orbHi + atr * atrMultSL * 0.25 : high + atr * atrMultSL
+    sl := high + atr * atrMultSL
     risk = sl - entry
     if risk > 0
-        tp1 := entry - risk
-        tp2 := entry - risk * 2
-        tp3 := entry - risk * rr
+        tp1 := entry - risk * tp1R
+        tp2 := entry - risk * tp2R
+        tp3 := entry - risk * tp3R
         inPos := true
         side := 'PUT'
         markSide := 'PUT'
