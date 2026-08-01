@@ -1,288 +1,110 @@
 //@version=6
-indicator('OJ Scale 15m — 0DTE + ORB', overlay=true, max_labels_count=500, max_lines_count=500)
+indicator('OJ 0DTE 15m', overlay=true, max_labels_count=200, max_lines_count=50)
 
-// ============================================
-// BOT PLAYBOOK (0DTE — same-day only, ATR-normalized)
-// Morning: ORB break of opening range (helps ensure a daily trade)
-// Later  : EMA 5/21 cross → wait 3 → retest → no squeeze/chase/climax
-// Session: US RTH window · flat by cutoff · no overnight · day-break reset
-// Size  : open 3 lots | risk 2% equity to stop (outside TV)
-// Scale : TP1 (+1R) close 1 | TP2 (+2R) close 1 | TP3 (+3R) close last
-// Hard exits: SL, FLIP, EOD / DAY BREAK
-// Heads-up ONLY (do NOT auto-flatten): CHoCH, WARN FLIP, SQUEEZE, BOS
-// ============================================
-emaFastLen    = input.int(5, 'Fast EMA', minval=1)
-emaSlowLen    = input.int(21, 'Slow EMA', minval=1)
-atrLen        = input.int(14, 'ATR Period', minval=1)
-atrMultSL     = input.float(0.5, 'SL Multiplier (ATR)', minval=0.1, step=0.1)
-riskReward    = input.float(3.0, 'Final R:R (TP3)', minval=1.0, step=0.5)
-confirmCandle = input.bool(true, 'Require candle confirmation on ENTRY bar')
-waitBars      = input.int(3, 'Bars to wait after cross', minval=0, maxval=12)
-requireAlign  = input.bool(true, 'Block opposite structure (allow Building)', group='Filters')
-skipSqueeze   = input.bool(true, 'Skip entry if EMA squeeze', group='Filters')
-squeezeGap    = input.float(0.35, 'Squeeze threshold (EMA gap / ATR)', minval=0.05, step=0.05, group='Filters')
-requireRetest = input.bool(true, 'Require EMA / cross-zone retest (no blind chase)', group='Filters')
-maxChaseATR   = input.float(1.5, 'Max chase distance from slow EMA (ATR)', minval=0.25, step=0.25, group='Filters')
-entryLagBars  = input.int(5, 'Extra bars allowed after wait (then cancel)', minval=0, maxval=12, group='Filters')
-maxBodyATR    = input.float(1.5, 'Skip if entry candle body > ATR x', minval=0.4, step=0.1, group='Filters')
-minAtrPct     = input.float(0.08, 'Min ATR % of price (skip dead names)', minval=0.0, step=0.05, group='Filters')
-minVolMult    = input.float(0.0, 'Min volume vs 20-bar avg (0=off)', minval=0.0, step=0.1, group='Filters')
+// 0DTE: ORB morning · EMA wait later · scale TP1/2/3 · flat 15:45 NY
+emaFastLen = input.int(5, 'Fast EMA')
+emaSlowLen = input.int(21, 'Slow EMA')
+atrLen     = input.int(14, 'ATR')
+atrMultSL  = input.float(0.5, 'SL ATR mult', step=0.1)
+rr         = input.float(3.0, 'TP3 R:R', step=0.5)
+waitBars   = input.int(3, 'EMA wait bars', minval=0, maxval=8)
+orbMins    = input.int(15, 'ORB minutes', options=[15, 30])
+flatHH     = input.int(15, 'Flat hour NY')
+flatMM     = input.int(45, 'Flat minute NY')
 
-tradeSession  = input.session('0930-1545', '0DTE trade window', group='0DTE', tooltip='America/New_York. No new entries outside this window.')
-flatHour      = input.int(15, 'Force-flat hour (NY)', minval=0, maxval=23, group='0DTE')
-flatMinute    = input.int(45, 'Force-flat minute (NY)', minval=0, maxval=59, group='0DTE')
-showDayBreaks = input.bool(true, 'Show day-break lines', group='0DTE')
-shadeOffSess  = input.bool(true, 'Shade outside trade window', group='0DTE')
-oneEntryDay   = input.bool(false, 'Max 1 entry per day', group='0DTE', tooltip='Off = ORB morning + EMA later both allowed.')
-
-useOrb        = input.bool(true, 'Enable ORB morning entries', group='ORB')
-orbMinutes    = input.int(15, 'Opening range minutes', options=[15, 30], group='ORB')
-orbUntilHour  = input.int(11, 'ORB entries until hour (NY)', minval=10, maxval=15, group='ORB')
-minOrbATR     = input.float(0.20, 'Min ORB range (ATR x)', minval=0.05, step=0.05, group='ORB')
-maxOrbATR     = input.float(2.50, 'Max ORB range (ATR x)', minval=0.5, step=0.25, group='ORB')
-orbStopInside = input.bool(true, 'ORB stop = other side of range', group='ORB')
-showOrbLevels = input.bool(true, 'Show ORB high / low', group='ORB')
-
-swingLen      = input.int(5, 'Swing length (structure)', minval=2, maxval=20, group='Structure')
-showStructure = input.bool(true, 'Show CHoCH / BOS marks', group='Structure')
-showSwings    = input.bool(true, 'Mark swing highs / lows', group='Structure')
-showEmas      = input.bool(true, 'Show EMAs', group='Display')
-showLevels    = input.bool(true, 'Show entry / SL / TP lines', group='Display')
-showPending   = input.bool(true, 'Show pending markers', group='Display')
-showTpMarks   = input.bool(true, 'Show TP1/TP2/TP3 hit marks', group='Display')
-
-// --- 0DTE session clock (America/New_York) ---
-nyTz = 'America/New_York'
+ny = 'America/New_York'
 newDay = timeframe.change('D')
-inTradeWindow = not na(time(timeframe.period, tradeSession, nyTz))
-nyH = hour(time, nyTz)
-nyM = minute(time, nyTz)
-pastFlat = nyH > flatHour or (nyH == flatHour and nyM >= flatMinute)
-canEnter = inTradeWindow and not pastFlat
-orbBuildSession = orbMinutes == 15 ? '0930-0945' : '0930-1000'
-inOrbBuild = not na(time(timeframe.period, orbBuildSession, nyTz))
-orbEntryOk = canEnter and (nyH < orbUntilHour or (nyH == orbUntilHour and nyM == 0))
+nyH = hour(time, ny)
+nyM = minute(time, ny)
+pastFlat = nyH > flatHH or (nyH == flatHH and nyM >= flatMM)
+canEnter = not na(time(timeframe.period, '0930-1545', ny)) and not pastFlat
+inOrbBuild = not na(time(timeframe.period, orbMins == 15 ? '0930-0945' : '0930-1000', ny))
 
-emaFast = ta.ema(close, emaFastLen)
-emaSlow = ta.ema(close, emaSlowLen)
-atr     = ta.atr(atrLen)
+emaF = ta.ema(close, emaFastLen)
+emaS = ta.ema(close, emaSlowLen)
+atr  = ta.atr(atrLen)
+bull = emaF > emaS
+bear = emaF < emaS
+crossUp = bull and bull != bull[1] and close > open
+crossDn = bear and bear != bear[1] and close < open
 
-bullTrend   = emaFast > emaSlow
-bearTrend   = emaFast < emaSlow
-trendChange = bullTrend != bullTrend[1]
-
-crossUpRaw = bullTrend and trendChange and (not confirmCandle or close > open)
-crossDnRaw = bearTrend and trendChange and (not confirmCandle or close < open)
-
-emaGap = atr > 0 ? math.abs(emaFast - emaSlow) / atr : 999.0
-inSqueeze = emaGap < squeezeGap
-
-// ============================================
-// MARKET STRUCTURE — CHoCH / BOS
-// ============================================
-ph = ta.pivothigh(high, swingLen, swingLen)
-pl = ta.pivotlow(low, swingLen, swingLen)
-
-var float lastSH = na
-var float lastSL = na
-var int   structBias = 0
-var line  shLevel = na
-var line  slLevel = na
-
-chochBull = false
-chochBear = false
-bosBull   = false
-bosBear   = false
-
-if not na(ph)
-    lastSH := ph
-    if showSwings
-        label.new(bar_index - swingLen, ph, 'SH', style=label.style_label_down, color=color.new(color.gray, 70), textcolor=color.white, size=size.tiny)
-if not na(pl)
-    lastSL := pl
-    if showSwings
-        label.new(bar_index - swingLen, pl, 'SL', style=label.style_label_up, color=color.new(color.gray, 70), textcolor=color.white, size=size.tiny)
-
-if not na(lastSH) and close > lastSH and close[1] <= lastSH
-    if structBias == -1
-        chochBull := true
-        structBias := 1
-    else
-        bosBull := true
-        structBias := 1
-
-if not na(lastSL) and close < lastSL and close[1] >= lastSL
-    if structBias == 1
-        chochBear := true
-        structBias := -1
-    else
-        bosBear := true
-        structBias := -1
-
-if showStructure and not na(lastSH)
-    if na(shLevel)
-        shLevel := line.new(bar_index - 1, lastSH, bar_index + 1, lastSH, color=color.new(color.red, 50), style=line.style_dashed, width=1)
-    else
-        line.set_xy1(shLevel, bar_index - 20, lastSH)
-        line.set_xy2(shLevel, bar_index + 2, lastSH)
-if showStructure and not na(lastSL)
-    if na(slLevel)
-        slLevel := line.new(bar_index - 1, lastSL, bar_index + 1, lastSL, color=color.new(color.lime, 50), style=line.style_dashed, width=1)
-    else
-        line.set_xy1(slLevel, bar_index - 20, lastSL)
-        line.set_xy2(slLevel, bar_index + 2, lastSL)
-
-emaSqueezeEvent = atr > 0 and emaGap < squeezeGap and emaGap[1] >= squeezeGap
-
-// ============================================
-// ORB — Opening Range Breakout (morning daily driver)
-// ============================================
-var float orbHigh = na
-var float orbLow = na
+// --- ORB ---
+var float orbHi = na
+var float orbLo = na
 var bool orbReady = false
 var bool orbUsed = false
-var bool tradedToday = false
-var string entryTag = ''
 
 if newDay
-    orbHigh := na
-    orbLow := na
+    orbHi := na
+    orbLo := na
     orbReady := false
     orbUsed := false
-    tradedToday := false
 
 if inOrbBuild
-    orbHigh := na(orbHigh) ? high : math.max(orbHigh, high)
-    orbLow := na(orbLow) ? low : math.min(orbLow, low)
-else if not na(orbHigh) and not na(orbLow) and not orbReady
+    orbHi := na(orbHi) ? high : math.max(orbHi, high)
+    orbLo := na(orbLo) ? low : math.min(orbLo, low)
+else if not na(orbHi) and not na(orbLo)
     orbReady := true
 
-orbWidth = not na(orbHigh) and not na(orbLow) ? orbHigh - orbLow : na
-orbWidthOk = atr > 0 and not na(orbWidth) and orbWidth >= atr * minOrbATR and orbWidth <= atr * maxOrbATR
-orbBreakCall = useOrb and orbReady and not orbUsed and orbEntryOk and orbWidthOk and close > orbHigh and (not confirmCandle or close > open)
-orbBreakPut  = useOrb and orbReady and not orbUsed and orbEntryOk and orbWidthOk and close < orbLow and (not confirmCandle or close < open)
+orbOk = atr > 0 and not na(orbHi) and (orbHi - orbLo) > atr * 0.2 and (orbHi - orbLo) < atr * 2.5
+orbCall = canEnter and orbReady and not orbUsed and nyH < 11 and orbOk and close > orbHi and close > open
+orbPut  = canEnter and orbReady and not orbUsed and nyH < 11 and orbOk and close < orbLo and close < open
 
-// ============================================
-// PENDING CROSS → WAIT → FILTERED ENTRY
-// 0DTE: no overnight pending · entries only inside trade window before flat time
-// ============================================
-var int pendingDir = 0
-var int pendingBar = na
-var float pendingRefHigh = na   // cross-bar high for PUT retest
-var float pendingRefLow = na    // cross-bar low for CALL retest
+// --- EMA wait ---
+var int pend = 0
+var int pendBar = na
 
-// Day break / off-session: wipe pending setups (0DTE — no carry)
 if newDay or not canEnter
-    pendingDir := 0
-    pendingBar := na
-    pendingRefHigh := na
-    pendingRefLow := na
+    pend := 0
+    pendBar := na
+if canEnter and crossUp
+    pend := 1
+    pendBar := bar_index
+if canEnter and crossDn
+    pend := -1
+    pendBar := bar_index
+if pend == 1 and bear
+    pend := 0
+if pend == -1 and bull
+    pend := 0
 
-if canEnter and crossUpRaw
-    pendingDir := 1
-    pendingBar := bar_index
-    pendingRefLow := low
-    pendingRefHigh := na
-if canEnter and crossDnRaw
-    pendingDir := -1
-    pendingBar := bar_index
-    pendingRefHigh := high
-    pendingRefLow := na
+waited = pend != 0 and not na(pendBar) ? bar_index - pendBar : 0
+if pend != 0 and waited > waitBars + 5
+    pend := 0
 
-if pendingDir == 1 and bearTrend
-    pendingDir := 0
-    pendingBar := na
-    pendingRefLow := na
-if pendingDir == -1 and bullTrend
-    pendingDir := 0
-    pendingBar := na
-    pendingRefHigh := na
+nearSlow = atr > 0 and math.abs(close - emaS) / atr <= 1.5
+emaCall = canEnter and pend == 1 and waited >= waitBars and bull and close > open and close >= emaS and nearSlow and low <= math.max(emaF, emaS) + atr * 0.25
+emaPut  = canEnter and pend == -1 and waited >= waitBars and bear and close < open and close <= emaS and nearSlow and high >= math.min(emaF, emaS) - atr * 0.25
 
-barsWaited = pendingDir != 0 and not na(pendingBar) ? bar_index - pendingBar : 0
-maxLag = waitBars + entryLagBars
-
-// Expire late setups — do not chase after the entry window
-if pendingDir != 0 and barsWaited > maxLag
-    pendingDir := 0
-    pendingBar := na
-    pendingRefHigh := na
-    pendingRefLow := na
-
-alignLong  = not requireAlign or structBias != -1   // allow bullish or Building
-alignShort = not requireAlign or structBias != 1    // allow bearish or Building
-sqOk       = not skipSqueeze or not inSqueeze
-
-emaHi = math.max(emaFast, emaSlow)
-emaLo = math.min(emaFast, emaSlow)
-bodySize = math.abs(close - open)
-
-// Retest: tag EMA band or cross-bar extreme (slightly softer buffer)
-callRetest = not requireRetest or low <= emaHi + atr * 0.25 or (not na(pendingRefLow) and low <= pendingRefLow + atr * 0.2)
-putRetest  = not requireRetest or high >= emaLo - atr * 0.25 or (not na(pendingRefHigh) and high >= pendingRefHigh - atr * 0.2)
-
-callNotChase = atr > 0 ? (close - emaSlow) / atr <= maxChaseATR : true
-putNotChase  = atr > 0 ? (emaSlow - close) / atr <= maxChaseATR : true
-
-// Skip climax entry candles (buying the top / selling the dump)
-callNotClimax = atr <= 0 or bodySize / atr <= maxBodyATR
-putNotClimax  = atr <= 0 or bodySize / atr <= maxBodyATR
-
-// Stay on correct side of SLOW EMA so a fast-EMA retest can still fire
-callTrendOk = close >= emaSlow
-putTrendOk  = close <= emaSlow
-
-// Cross-ticker quality gates (ATR% + relative volume + 0DTE session)
-atrPctOk = minAtrPct <= 0 or close <= 0 or (atr / close * 100.0) >= minAtrPct
-volAvg20 = ta.sma(volume, 20)
-volOk    = minVolMult <= 0 or na(volAvg20) or volAvg20 <= 0 or volume >= volAvg20 * minVolMult
-tradeOk  = atrPctOk and volOk and canEnter
-
-readyLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and (not confirmCandle or close > open) and alignLong and sqOk and callRetest and callNotChase and callNotClimax and callTrendOk and tradeOk
-readyShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and (not confirmCandle or close < open) and alignShort and sqOk and putRetest and putNotChase and putNotClimax and putTrendOk and tradeOk
-
-daySlotOk = not oneEntryDay or not tradedToday
-orbCall = orbBreakCall and daySlotOk
-orbPut  = orbBreakPut and daySlotOk
-
-blockedLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and not readyLong
-blockedShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and not readyShort
-
-// Do NOT wipe pending during the wait on cross-bar distance — that killed almost all signals.
-// Chase is gated at entry via callNotChase / putNotChase (distance from slow EMA).
-
-var float entryPrice = na
-var float stopLoss   = na
+// --- Position ---
+var float entry = na
+var float sl = na
 var float tp1 = na
 var float tp2 = na
 var float tp3 = na
-var float riskAmt = na
-var bool  inPosition = false
-var string positionType = ''
-var string tradeSide = ''      // stays set through TP hits (for marks)
-var bool  tp1Done = false
-var bool  tp2Done = false
-var bool  tp3Done = false
+var bool inPos = false
+var string side = ''
+var string markSide = ''
+var bool tp1Done = false
+var bool tp2Done = false
+var bool tp3Done = false
 
+callHit = false
+putHit = false
 tp1Hit = false
 tp2Hit = false
 tp3Hit = false
 slHit = false
 eodHit = false
-invalidated = false
-showCall = false
-showPut = false
+flipHit = false
 
-// 0DTE hard flat: day break or past force-flat clock
-if inPosition and (newDay or pastFlat)
+if inPos and (newDay or pastFlat)
     eodHit := true
-    inPosition := false
-    positionType := ''
-    pendingDir := 0
-    pendingBar := na
-    pendingRefHigh := na
-    pendingRefLow := na
+    inPos := false
+    side := ''
+    pend := 0
 
-if inPosition and positionType == 'CALL'
+if inPos and side == 'CALL'
     if not tp1Done and high >= tp1
         tp1Hit := true
         tp1Done := true
@@ -292,14 +114,14 @@ if inPosition and positionType == 'CALL'
     if not tp3Done and high >= tp3
         tp3Hit := true
         tp3Done := true
-        inPosition := false
-        positionType := ''
-    if inPosition and low <= stopLoss
+        inPos := false
+        side := ''
+    if inPos and low <= sl
         slHit := true
-        inPosition := false
-        positionType := ''
+        inPos := false
+        side := ''
 
-if inPosition and positionType == 'PUT'
+if inPos and side == 'PUT'
     if not tp1Done and low <= tp1
         tp1Hit := true
         tp1Done := true
@@ -309,198 +131,107 @@ if inPosition and positionType == 'PUT'
     if not tp3Done and low <= tp3
         tp3Hit := true
         tp3Done := true
-        inPosition := false
-        positionType := ''
-    if inPosition and high >= stopLoss
+        inPos := false
+        side := ''
+    if inPos and high >= sl
         slHit := true
-        inPosition := false
-        positionType := ''
+        inPos := false
+        side := ''
 
-enterCall = (orbCall or readyLong) and daySlotOk and (not inPosition or positionType != 'CALL')
-enterPut  = (orbPut or readyShort) and daySlotOk and (not inPosition or positionType != 'PUT')
-// Prefer ORB when both fire same bar
-useOrbCall = enterCall and orbCall
-useOrbPut  = enterPut and orbPut
+goCall = (orbCall or emaCall) and (not inPos or side == 'PUT')
+goPut  = (orbPut or emaPut) and (not inPos or side == 'CALL')
+fromOrbCall = orbCall
+fromOrbPut  = orbPut
 
-if enterCall
-    if inPosition and positionType == 'PUT'
-        invalidated := true
-        inPosition := false
-    entryPrice := close
-    if useOrbCall and orbStopInside and not na(orbLow)
-        stopLoss := orbLow - atr * atrMultSL * 0.25
-    else
-        stopLoss := low - atr * atrMultSL
-    riskAmt := entryPrice - stopLoss
-    if riskAmt > 0
-        tp1 := entryPrice + riskAmt * 1.0
-        tp2 := entryPrice + riskAmt * 2.0
-        tp3 := entryPrice + riskAmt * riskReward
-        inPosition := true
-        positionType := 'CALL'
-        tradeSide := 'CALL'
-        entryTag := useOrbCall ? 'ORB' : 'EMA'
-        showCall := true
-        tradedToday := true
-        if useOrbCall
-            orbUsed := true
+if goCall
+    if inPos and side == 'PUT'
+        flipHit := true
+        inPos := false
+    entry := close
+    sl := fromOrbCall and not na(orbLo) ? orbLo - atr * atrMultSL * 0.25 : low - atr * atrMultSL
+    risk = entry - sl
+    if risk > 0
+        tp1 := entry + risk
+        tp2 := entry + risk * 2
+        tp3 := entry + risk * rr
+        inPos := true
+        side := 'CALL'
+        markSide := 'CALL'
+        callHit := true
         tp1Done := false
         tp2Done := false
         tp3Done := false
-        pendingDir := 0
-        pendingBar := na
-        pendingRefLow := na
-        pendingRefHigh := na
-
-if enterPut
-    if inPosition and positionType == 'CALL'
-        invalidated := true
-        inPosition := false
-    entryPrice := close
-    if useOrbPut and orbStopInside and not na(orbHigh)
-        stopLoss := orbHigh + atr * atrMultSL * 0.25
-    else
-        stopLoss := high + atr * atrMultSL
-    riskAmt := stopLoss - entryPrice
-    if riskAmt > 0
-        tp1 := entryPrice - riskAmt * 1.0
-        tp2 := entryPrice - riskAmt * 2.0
-        tp3 := entryPrice - riskAmt * riskReward
-        inPosition := true
-        positionType := 'PUT'
-        tradeSide := 'PUT'
-        entryTag := useOrbPut ? 'ORB' : 'EMA'
-        showPut := true
-        tradedToday := true
-        if useOrbPut
+        pend := 0
+        if orbCall
             orbUsed := true
+
+if goPut
+    if inPos and side == 'CALL'
+        flipHit := true
+        inPos := false
+    entry := close
+    sl := fromOrbPut and not na(orbHi) ? orbHi + atr * atrMultSL * 0.25 : high + atr * atrMultSL
+    risk = sl - entry
+    if risk > 0
+        tp1 := entry - risk
+        tp2 := entry - risk * 2
+        tp3 := entry - risk * rr
+        inPos := true
+        side := 'PUT'
+        markSide := 'PUT'
+        putHit := true
         tp1Done := false
         tp2Done := false
         tp3Done := false
-        pendingDir := 0
-        pendingBar := na
-        pendingRefHigh := na
-        pendingRefLow := na
+        pend := 0
+        if orbPut
+            orbUsed := true
 
-warnFlipLong  = inPosition and positionType == 'CALL' and chochBear
-warnFlipShort = inPosition and positionType == 'PUT' and chochBull
+// --- Visuals (minimal) ---
+bgcolor(not canEnter ? color.new(color.gray, 93) : na)
+plot(emaF, 'EMA 5', color=color.new(color.teal, 0), linewidth=2)
+plot(emaS, 'EMA 21', color=color.new(color.orange, 0), linewidth=2)
+plot(orbReady and canEnter ? orbHi : na, 'ORB Hi', color=color.new(#00bcd4, 20), style=plot.style_linebr)
+plot(orbReady and canEnter ? orbLo : na, 'ORB Lo', color=color.new(#ff7043, 20), style=plot.style_linebr)
+plot(inPos ? entry : na, 'Entry', color=color.new(color.white, 40), style=plot.style_linebr)
+plot(inPos ? sl : na, 'SL', color=color.red, style=plot.style_linebr, linewidth=2)
+plot(inPos ? tp1 : na, 'TP1', color=color.new(#69f0ae, 0), style=plot.style_linebr)
+plot(inPos ? tp2 : na, 'TP2', color=color.new(#00e676, 0), style=plot.style_linebr)
+plot(inPos ? tp3 : na, 'TP3', color=color.new(#00c853, 0), style=plot.style_linebr, linewidth=2)
 
-// ============================================
-// VISUALS
-// ============================================
-bgcolor(shadeOffSess and not inTradeWindow ? color.new(color.gray, 92) : na, title='Off 0DTE window')
-bgcolor(useOrb and inOrbBuild ? color.new(#26c6da, 92) : na, title='ORB build')
-if showDayBreaks and newDay
-    line.new(bar_index, low, bar_index, high, extend=extend.both, color=color.new(#90a4ae, 35), style=line.style_dotted, width=1)
-    label.new(bar_index, high, 'DAY', style=label.style_label_down, color=color.new(#455a64, 20), textcolor=color.white, size=size.tiny)
+plotshape(callHit, title='CALL', style=shape.labelup, location.belowbar, color=color.lime, text='CALL', textcolor=color.white, size=size.small)
+plotshape(putHit, title='PUT', style=shape.labeldown, location.abovebar, color=color.red, text='PUT', textcolor=color.white, size=size.small)
+plotshape(slHit, title='SL', style=shape.xcross, location.belowbar, color=color.red, text='SL', textcolor=color.white, size=size.tiny)
+plotshape(eodHit, title='EOD', style=shape.xcross, location.abovebar, color=color.gray, text='EOD', textcolor=color.white, size=size.tiny)
 
-plot(showEmas ? emaFast : na, 'Fast EMA (5)', color=color.new(color.teal, 0), linewidth=2)
-plot(showEmas ? emaSlow : na, 'Slow EMA (21)', color=color.new(color.orange, 0), linewidth=2)
-plot(showOrbLevels and orbReady and canEnter ? orbHigh : na, 'ORB High', color=color.new(#00bcd4, 0), style=plot.style_linebr, linewidth=2)
-plot(showOrbLevels and orbReady and canEnter ? orbLow : na, 'ORB Low', color=color.new(#ff7043, 0), style=plot.style_linebr, linewidth=2)
-
-plotshape(showStructure and chochBull, 'CHoCH Bull', shape.labelup, location.belowbar, color.new(#00e5ff, 0), text='CHoCH↑', textcolor=color.black, size=size.small)
-plotshape(showStructure and chochBear, 'CHoCH Bear', shape.labeldown, location.abovebar, color.new(#ff9100, 0), text='CHoCH↓', textcolor=color.black, size=size.small)
-plotshape(showStructure and bosBull, 'BOS Bull', shape.triangleup, location.belowbar, color.new(#76ff03, 30), size=size.tiny)
-plotshape(showStructure and bosBear, 'BOS Bear', shape.triangledown, location.abovebar, color.new(#ff5252, 30), size=size.tiny)
-plotshape(showStructure and emaSqueezeEvent, 'EMA Squeeze', shape.diamond, location.absolute, color.new(color.fuchsia, 30), text='SQZ', textcolor=color.white, size=size.tiny)
-
-pendingMark = showPending and pendingDir != 0 and not inPosition and not showCall and not showPut and not blockedLong and not blockedShort
-plotshape(pendingMark and pendingDir == 1, 'Pending CALL', shape.triangleup, location.belowbar, color.new(color.teal, 40), size=size.tiny)
-plotshape(pendingMark and pendingDir == -1, 'Pending PUT', shape.triangledown, location.abovebar, color.new(color.orange, 40), size=size.tiny)
-plotshape(showPending and blockedLong, 'Blocked CALL', shape.xcross, location.belowbar, color.new(color.gray, 40), text='BLK', size=size.tiny)
-plotshape(showPending and blockedShort, 'Blocked PUT', shape.xcross, location.abovebar, color.new(color.gray, 40), text='BLK', size=size.tiny)
-
-plotshape(showCall, 'CALL', shape.labelup, location.belowbar, color.new(color.lime, 0), text='CALL', textcolor=color.white, size=size.small)
-plotshape(showPut, 'PUT', shape.labeldown, location.abovebar, color.new(color.red, 0), text='PUT', textcolor=color.white, size=size.small)
-plotshape(showCall and entryTag == 'ORB', 'CALL ORB', shape.circle, location.belowbar, color.new(#00bcd4, 0), size=size.tiny)
-plotshape(showPut and entryTag == 'ORB', 'PUT ORB', shape.circle, location.abovebar, color.new(#ff7043, 0), size=size.tiny)
-
-// Live TP/SL level plots (visible for both CALL and PUT)
-plot(showLevels and inPosition ? entryPrice : na, 'Entry', color=color.new(color.white, 30), style=plot.style_linebr, linewidth=1)
-plot(showLevels and inPosition ? stopLoss : na, 'Stop', color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
-plot(showLevels and inPosition ? tp1 : na, 'TP1 level', color=color.new(#69f0ae, 0), style=plot.style_linebr, linewidth=1)
-plot(showLevels and inPosition ? tp2 : na, 'TP2 level', color=color.new(#00e676, 0), style=plot.style_linebr, linewidth=1)
-plot(showLevels and inPosition ? tp3 : na, 'TP3 level', color=color.new(#00c853, 0), style=plot.style_linebr, linewidth=2)
-
-// TP hit labels at the actual TP price (works for PUTs below entry)
-if showTpMarks and tp1Hit and not na(tp1)
-    label.new(bar_index, tp1, 'TP1', style=tradeSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#69f0ae, 0), textcolor=color.black, size=size.small)
-if showTpMarks and tp2Hit and not na(tp2)
-    label.new(bar_index, tp2, 'TP2', style=tradeSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#00e676, 0), textcolor=color.black, size=size.small)
-if showTpMarks and tp3Hit and not na(tp3)
-    label.new(bar_index, tp3, 'TP3', style=tradeSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#00c853, 0), textcolor=color.white, size=size.normal)
-
-plotshape(slHit, 'SL', shape.xcross, location.belowbar, color.new(#ff1744, 0), text='SL', textcolor=color.white, size=size.tiny)
-plotshape(eodHit, 'EOD', shape.xcross, location.abovebar, color.new(#78909c, 0), text='EOD', textcolor=color.white, size=size.tiny)
-plotshape(invalidated, 'INV', shape.diamond, location.abovebar, color.new(color.yellow, 0), text='INV', size=size.tiny)
-plotshape(warnFlipLong or warnFlipShort, 'WARN FLIP', shape.xcross, location.abovebar, color.new(#ff6d00, 0), text='WARN', textcolor=color.white, size=size.small)
-
-var table info = table.new(position.top_right, 2, 10, bgcolor=color.new(color.black, 80), border_width=1)
-if barstate.islast
-    table.cell(info, 0, 0, 'Symbol', text_color=color.gray, text_size=size.small)
-    table.cell(info, 1, 0, syminfo.ticker + ' · 0DTE+ORB', text_color=color.aqua, text_size=size.small)
-    table.cell(info, 0, 1, 'Status', text_color=color.gray, text_size=size.small)
-    statusTxt = inPosition ? (positionType + (entryTag != '' ? '·' + entryTag : '')) : (pendingDir == 1 ? 'Wait CALL' : pendingDir == -1 ? 'Wait PUT' : (orbReady and not orbUsed ? 'ORB ready' : (pastFlat ? 'Flat·EOD' : 'Flat')))
-    table.cell(info, 1, 1, statusTxt, text_color=color.yellow, text_size=size.small)
-    table.cell(info, 0, 2, 'Structure', text_color=color.gray, text_size=size.small)
-    table.cell(info, 1, 2, structBias == 1 ? 'Bullish' : structBias == -1 ? 'Bearish' : 'Building', text_color=structBias == 1 ? color.lime : structBias == -1 ? color.red : color.gray, text_size=size.small)
-    table.cell(info, 0, 3, 'Squeeze', text_color=color.gray, text_size=size.small)
-    table.cell(info, 1, 3, inSqueeze ? 'YES (entries blocked)' : 'No', text_color=inSqueeze ? color.fuchsia : color.gray, text_size=size.small)
-    table.cell(info, 0, 4, 'Session', text_color=color.gray, text_size=size.small)
-    sessTxt = (canEnter ? 'OPEN ' : 'CLOSED ') + (atrPctOk ? 'ATR✓ ' : 'ATR✗ ') + (volOk ? 'Vol✓' : 'Vol✗')
-    table.cell(info, 1, 4, sessTxt, text_color=canEnter ? color.lime : color.orange, text_size=size.small)
-    if inPosition
-        table.cell(info, 0, 5, 'Entry', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 5, str.tostring(entryPrice, format.mintick), text_color=color.white, text_size=size.small)
-        table.cell(info, 0, 6, 'TP1 / TP2 / TP3', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 6, str.tostring(tp1, format.mintick) + ' / ' + str.tostring(tp2, format.mintick) + ' / ' + str.tostring(tp3, format.mintick), text_color=color.lime, text_size=size.small)
-        table.cell(info, 0, 7, 'SL', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 7, str.tostring(stopLoss, format.mintick), text_color=color.red, text_size=size.small)
-        table.cell(info, 0, 8, 'Hits', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 8, (tp1Done ? 'TP1 ' : '') + (tp2Done ? 'TP2 ' : '') + (tp3Done ? 'TP3' : ''), text_color=color.lime, text_size=size.small)
-        table.cell(info, 0, 9, 'Bot', text_color=color.gray, text_size=size.small)
-        table.cell(info, 1, 9, 'ORB AM · EMA later · flat ' + str.tostring(flatHour) + ':' + (flatMinute < 10 ? '0' : '') + str.tostring(flatMinute), text_color=color.orange, text_size=size.small)
-
-// ============================================
-// ALERTS
-// ============================================
-alertcondition(showCall, title='ENTRY CALL', message='ENTRY CALL {{ticker}} 15m price={{close}}')
-alertcondition(showPut, title='ENTRY PUT', message='ENTRY PUT {{ticker}} 15m price={{close}}')
-alertcondition(tp1Hit, title='TP1 1R', message='TP1 {{ticker}} 15m price={{close}}')
-alertcondition(tp2Hit, title='TP2 2R', message='TP2 {{ticker}} 15m price={{close}}')
-alertcondition(tp3Hit, title='TP3 3R', message='TP3 {{ticker}} 15m price={{close}}')
-alertcondition(slHit, title='STOP LOSS', message='SL {{ticker}} 15m price={{close}}')
-alertcondition(eodHit, title='EOD FLAT 0DTE', message='EOD FLAT {{ticker}} 15m — day break / cutoff')
-alertcondition(invalidated, title='FLIP EXIT', message='FLIP {{ticker}} 15m price={{close}}')
-alertcondition(chochBull, title='HEADSUP CHoCH Bull', message='HEADSUP CHoCH BULL {{ticker}} — do not auto-exit')
-alertcondition(chochBear, title='HEADSUP CHoCH Bear', message='HEADSUP CHoCH BEAR {{ticker}} — do not auto-exit')
-alertcondition(bosBull, title='HEADSUP BOS Bull', message='HEADSUP BOS BULL {{ticker}}')
-alertcondition(bosBear, title='HEADSUP BOS Bear', message='HEADSUP BOS BEAR {{ticker}}')
-alertcondition(warnFlipLong or warnFlipShort, title='HEADSUP WARN FLIP', message='HEADSUP WARN FLIP {{ticker}} — heads-up only')
-alertcondition(emaSqueezeEvent, title='HEADSUP SQUEEZE', message='HEADSUP SQUEEZE {{ticker}} — flip risk rising')
-
-if showCall
-    alert('ENTRY CALL ' + entryTag + ' ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
-if showPut
-    alert('ENTRY PUT ' + entryTag + ' ' + syminfo.ticker + ' price=' + str.tostring(close) + ' sl=' + str.tostring(stopLoss) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
 if tp1Hit
-    alert('TP1 ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+    label.new(bar_index, tp1, 'TP1', style=markSide == 'PUT' ? label.style_label_up : label.style_label_down, color=#69f0ae, textcolor=color.black, size=size.tiny)
 if tp2Hit
-    alert('TP2 ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+    label.new(bar_index, tp2, 'TP2', style=markSide == 'PUT' ? label.style_label_up : label.style_label_down, color=#00e676, textcolor=color.black, size=size.tiny)
 if tp3Hit
-    alert('TP3 ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+    label.new(bar_index, tp3, 'TP3', style=markSide == 'PUT' ? label.style_label_up : label.style_label_down, color=#00c853, textcolor=color.white, size=size.small)
+
+// --- Alerts ---
+alertcondition(callHit, 'ENTRY CALL', 'ENTRY CALL {{ticker}}')
+alertcondition(putHit, 'ENTRY PUT', 'ENTRY PUT {{ticker}}')
+alertcondition(tp1Hit, 'TP1', 'TP1 {{ticker}}')
+alertcondition(tp2Hit, 'TP2', 'TP2 {{ticker}}')
+alertcondition(tp3Hit, 'TP3', 'TP3 {{ticker}}')
+alertcondition(slHit, 'SL', 'SL {{ticker}}')
+alertcondition(eodHit, 'EOD', 'EOD FLAT {{ticker}}')
+alertcondition(flipHit, 'FLIP', 'FLIP {{ticker}}')
+
+if callHit
+    alert('ENTRY CALL ' + syminfo.ticker + ' ' + str.tostring(close) + ' sl=' + str.tostring(sl) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+if putHit
+    alert('ENTRY PUT ' + syminfo.ticker + ' ' + str.tostring(close) + ' sl=' + str.tostring(sl) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+if tp1Hit
+    alert('TP1 ' + syminfo.ticker, alert.freq_once_per_bar_close)
+if tp2Hit
+    alert('TP2 ' + syminfo.ticker, alert.freq_once_per_bar_close)
+if tp3Hit
+    alert('TP3 ' + syminfo.ticker, alert.freq_once_per_bar_close)
 if slHit
-    alert('SL ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
+    alert('SL ' + syminfo.ticker, alert.freq_once_per_bar_close)
 if eodHit
-    alert('EOD FLAT ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
-if invalidated
-    alert('FLIP ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
-if chochBull
-    alert('HEADSUP CHoCH BULL ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
-if chochBear
-    alert('HEADSUP CHoCH BEAR ' + syminfo.ticker + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
-if warnFlipLong or warnFlipShort
-    alert('HEADSUP WARN FLIP ' + syminfo.ticker + ' against ' + positionType + ' price=' + str.tostring(close), alert.freq_once_per_bar_close)
-if emaSqueezeEvent
-    alert('HEADSUP SQUEEZE ' + syminfo.ticker, alert.freq_once_per_bar_close)
+    alert('EOD FLAT ' + syminfo.ticker, alert.freq_once_per_bar_close)
