@@ -1,5 +1,5 @@
 //@version=6
-indicator('OJ 0DTE 15m', overlay=true, max_labels_count=100, max_lines_count=50)
+indicator('OJ 0DTE 15m', overlay=true, max_labels_count=500, max_lines_count=50)
 
 // 0DTE: ORB morning · EMA wait later · scale TP1/2/3 · flat 15:45 NY
 emaFastLen = input.int(5, 'Fast EMA')
@@ -166,6 +166,10 @@ if goCall
         pend := 0
         if orbCall
             orbUsed := true
+        // Mark TP targets on the entry bar
+        label.new(bar_index, tp1, 'TP1', style=label.style_label_left, color=color.new(#69f0ae, 0), textcolor=color.black, size=size.tiny)
+        label.new(bar_index, tp2, 'TP2', style=label.style_label_left, color=color.new(#00e676, 0), textcolor=color.black, size=size.tiny)
+        label.new(bar_index, tp3, 'TP3', style=label.style_label_left, color=color.new(#00c853, 0), textcolor=color.white, size=size.tiny)
 
 if goPut
     if inPos and side == 'CALL'
@@ -189,6 +193,9 @@ if goPut
         pend := 0
         if orbPut
             orbUsed := true
+        label.new(bar_index, tp1, 'TP1', style=label.style_label_left, color=color.new(#69f0ae, 0), textcolor=color.black, size=size.tiny)
+        label.new(bar_index, tp2, 'TP2', style=label.style_label_left, color=color.new(#00e676, 0), textcolor=color.black, size=size.tiny)
+        label.new(bar_index, tp3, 'TP3', style=label.style_label_left, color=color.new(#00c853, 0), textcolor=color.white, size=size.tiny)
 
 // --- Visuals ---
 bgcolor(not canEnter ? color.new(color.gray, 93) : na)
@@ -206,6 +213,14 @@ plotshape(callHit, title='CALL', style=shape.labelup, location=location.belowbar
 plotshape(putHit, title='PUT', style=shape.labeldown, location=location.abovebar, color=color.red, text='PUT', textcolor=color.white, size=size.small)
 plotshape(slHit, title='SL', style=shape.xcross, location=location.belowbar, color=color.red, text='SL', textcolor=color.white, size=size.tiny)
 plotshape(eodHit, title='EOD', style=shape.xcross, location=location.abovebar, color=color.gray, text='EOD', textcolor=color.white, size=size.tiny)
+
+// Mark TP hits on the chart at the TP price
+if tp1Hit and not na(tp1)
+    label.new(bar_index, tp1, 'TP1 ✓', style=markSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#69f0ae, 0), textcolor=color.black, size=size.small)
+if tp2Hit and not na(tp2)
+    label.new(bar_index, tp2, 'TP2 ✓', style=markSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#00e676, 0), textcolor=color.black, size=size.small)
+if tp3Hit and not na(tp3)
+    label.new(bar_index, tp3, 'TP3 ✓', style=markSide == 'PUT' ? label.style_label_up : label.style_label_down, color=color.new(#00c853, 0), textcolor=color.white, size=size.normal)
 
 // Fixed info box — bottom left (not on candles)
 px(float v) =>
