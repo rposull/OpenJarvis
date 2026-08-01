@@ -4,7 +4,7 @@ indicator('OJ Movers 15m — Keepers Scale (align+nosqz)', overlay=true, max_lab
 // ============================================
 // LOCKED BOT PLAYBOOK
 // Universe (best WR): TSLA · AMZN · SOXL   (skip MSTR / NVDA)
-// Entry : EMA 5/21 cross → wait 3 bars → structure ALIGNED → no EMA squeeze
+// Entry : EMA 5/21 cross → wait 3 bars → ALIGNED structure → EMA retest → no chase/climax → no squeeze
 // Size  : open 3 lots | risk 2% equity to stop (outside TV)
 // Scale : TP1 (+1R) close 1 | TP2 (+2R) close 1 | TP3 (+3R) close last
 // Hard exits: SL, FLIP
@@ -20,8 +20,10 @@ waitBars      = input.int(3, 'Bars to wait after cross', minval=0, maxval=12)
 requireAlign  = input.bool(true, 'Require structure align (bias matches side)', group='Filters')
 skipSqueeze   = input.bool(true, 'Skip entry if EMA squeeze', group='Filters')
 squeezeGap    = input.float(0.35, 'Squeeze threshold (EMA gap / ATR)', minval=0.05, step=0.05, group='Filters')
-requireRetest = input.bool(true, 'Prefer EMA/zone retest (soft — still allows PUTs)', group='Filters')
-maxChaseATR   = input.float(2.0, 'Max chase distance (ATR)', minval=0.5, step=0.25, group='Filters')
+requireRetest = input.bool(true, 'Require EMA / cross-zone retest (no blind chase)', group='Filters')
+maxChaseATR   = input.float(1.0, 'Max chase distance from slow EMA (ATR)', minval=0.25, step=0.25, group='Filters')
+entryLagBars  = input.int(2, 'Extra bars allowed after wait (then cancel)', minval=0, maxval=8, group='Filters')
+maxBodyATR    = input.float(1.2, 'Skip if entry candle body > ATR x', minval=0.4, step=0.1, group='Filters')
 
 swingLen      = input.int(5, 'Swing length (structure)', minval=2, maxval=20, group='Structure')
 showStructure = input.bool(true, 'Show CHoCH / BOS marks', group='Structure')
@@ -104,7 +106,7 @@ emaSqueezeEvent = atr > 0 and emaGap < squeezeGap and emaGap[1] >= squeezeGap
 
 // ============================================
 // PENDING CROSS → WAIT → FILTERED ENTRY
-// Puts: must retest the cross-bar high / EMA (rejection), not chase after the dump
+// Skip late chase: must retest EMA/cross zone, stay within chase ATR, no climax candle
 // ============================================
 var int pendingDir = 0
 var int pendingBar = na
@@ -132,34 +134,50 @@ if pendingDir == -1 and bullTrend
     pendingRefHigh := na
 
 barsWaited = pendingDir != 0 and not na(pendingBar) ? bar_index - pendingBar : 0
+maxLag = waitBars + entryLagBars
+
+// Expire late setups — do not chase after the entry window
+if pendingDir != 0 and barsWaited > maxLag
+    pendingDir := 0
+    pendingBar := na
+    pendingRefHigh := na
+    pendingRefLow := na
 
 alignLong  = not requireAlign or structBias == 1
-// Soft short align: only block clear bullish structure (was blocking almost all PUTs)
-alignShort = not requireAlign or structBias != 1
+alignShort = not requireAlign or structBias == -1
 sqOk       = not skipSqueeze or not inSqueeze
 
-upperWick = high - math.max(open, close)
-lowerWick = math.min(open, close) - low
+emaHi = math.max(emaFast, emaSlow)
+emaLo = math.min(emaFast, emaSlow)
+bodySize = math.abs(close - open)
 
-// Soft retest — allows PUTs again (hard retest of cross-high was too rare)
-callRetest = not requireRetest or low <= emaFast or low <= emaSlow or lowerWick > atr * 0.1 or barsWaited == waitBars
-putRetest  = not requireRetest or high >= emaFast or high >= emaSlow or upperWick > atr * 0.1 or barsWaited == waitBars or (not na(pendingRefHigh) and high >= pendingRefHigh * 0.997)
+// Hard retest: must tag EMA band or the cross-bar extreme (no waitBars bypass)
+callRetest = not requireRetest or low <= emaHi + atr * 0.15 or (not na(pendingRefLow) and low <= pendingRefLow + atr * 0.1)
+putRetest  = not requireRetest or high >= emaLo - atr * 0.15 or (not na(pendingRefHigh) and high >= pendingRefHigh - atr * 0.1)
 
 callNotChase = atr > 0 ? (close - emaSlow) / atr <= maxChaseATR : true
 putNotChase  = atr > 0 ? (emaSlow - close) / atr <= maxChaseATR : true
 
-readyLong  = pendingDir == 1 and barsWaited >= waitBars and bullTrend and (not confirmCandle or close > open) and alignLong and sqOk and callRetest and callNotChase
-readyShort = pendingDir == -1 and barsWaited >= waitBars and bearTrend and (not confirmCandle or close < open) and alignShort and sqOk and putRetest and putNotChase
+// Skip climax entry candles (buying the top / selling the dump)
+callNotClimax = atr <= 0 or bodySize / atr <= maxBodyATR
+putNotClimax  = atr <= 0 or bodySize / atr <= maxBodyATR
 
-blockedLong  = pendingDir == 1 and barsWaited >= waitBars and bullTrend and not readyLong
-blockedShort = pendingDir == -1 and barsWaited >= waitBars and bearTrend and not readyShort
+// Close must be on the correct side of the fast EMA (trend still intact)
+callTrendOk = close >= emaFast
+putTrendOk  = close <= emaFast
 
-// Only cancel if extremely extended
-if pendingDir == -1 and not na(pendingRefHigh) and atr > 0 and (pendingRefHigh - close) / atr > maxChaseATR + 1.5
+readyLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and (not confirmCandle or close > open) and alignLong and sqOk and callRetest and callNotChase and callNotClimax and callTrendOk
+readyShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and (not confirmCandle or close < open) and alignShort and sqOk and putRetest and putNotChase and putNotClimax and putTrendOk
+
+blockedLong  = pendingDir == 1 and barsWaited >= waitBars and barsWaited <= maxLag and bullTrend and not readyLong
+blockedShort = pendingDir == -1 and barsWaited >= waitBars and barsWaited <= maxLag and bearTrend and not readyShort
+
+// Cancel if already too extended from the cross reference
+if pendingDir == -1 and not na(pendingRefHigh) and atr > 0 and (pendingRefHigh - close) / atr > maxChaseATR
     pendingDir := 0
     pendingBar := na
     pendingRefHigh := na
-if pendingDir == 1 and not na(pendingRefLow) and atr > 0 and (close - pendingRefLow) / atr > maxChaseATR + 1.5
+if pendingDir == 1 and not na(pendingRefLow) and atr > 0 and (close - pendingRefLow) / atr > maxChaseATR
     pendingDir := 0
     pendingBar := na
     pendingRefLow := na
