@@ -252,27 +252,35 @@ if barstate.islast
     table.cell(box, 0, 7, 'Hits', text_color=color.gray, text_size=size.small)
     table.cell(box, 1, 7, (tp1Done ? 'TP1 ' : '') + (tp2Done ? 'TP2 ' : '') + (tp3Done ? 'TP3' : (inPos ? '—' : '')), text_color=color.aqua, text_size=size.small)
 
-// --- Alerts ---
-alertcondition(callHit, 'ENTRY CALL', 'ENTRY CALL {{ticker}}')
-alertcondition(putHit, 'ENTRY PUT', 'ENTRY PUT {{ticker}}')
-alertcondition(tp1Hit, 'TP1', 'TP1 {{ticker}}')
-alertcondition(tp2Hit, 'TP2', 'TP2 {{ticker}}')
-alertcondition(tp3Hit, 'TP3', 'TP3 {{ticker}}')
-alertcondition(slHit, 'SL', 'SL {{ticker}}')
-alertcondition(eodHit, 'EOD', 'EOD FLAT {{ticker}}')
-alertcondition(flipHit, 'FLIP', 'FLIP {{ticker}}')
+// --- Alerts (JSON webhook body for OpenJarvis — strategy oj_0dte only) ---
+ojJson(string event, string act, string dir, string right) =>
+    '{"strategy":"oj_0dte","event":"' + event + '","symbol":"' + syminfo.ticker + '","action":"' + act + '","direction":"' + dir + '","right":"' + right + '","price":' + str.tostring(close) + ',"sl":' + str.tostring(sl) + ',"tp1":' + str.tostring(tp1) + ',"tp2":' + str.tostring(tp2) + ',"tp3":' + str.tostring(tp3) + ',"entry_kind":"' + entryKind + '"}'
+
+ojExitJson(string event) =>
+    '{"strategy":"oj_0dte","event":"' + event + '","symbol":"' + syminfo.ticker + '","action":"close","price":' + str.tostring(close) + '}'
+
+alertcondition(callHit, 'ENTRY CALL', '{"strategy":"oj_0dte","event":"entry_call","symbol":"{{ticker}}","action":"buy","direction":"long","right":"call","price":{{close}}}')
+alertcondition(putHit, 'ENTRY PUT', '{"strategy":"oj_0dte","event":"entry_put","symbol":"{{ticker}}","action":"buy","direction":"short","right":"put","price":{{close}}}')
+alertcondition(tp1Hit, 'TP1', '{"strategy":"oj_0dte","event":"tp1","symbol":"{{ticker}}","action":"close","price":{{close}}}')
+alertcondition(tp2Hit, 'TP2', '{"strategy":"oj_0dte","event":"tp2","symbol":"{{ticker}}","action":"close","price":{{close}}}')
+alertcondition(tp3Hit, 'TP3', '{"strategy":"oj_0dte","event":"tp3","symbol":"{{ticker}}","action":"close","price":{{close}}}')
+alertcondition(slHit, 'SL', '{"strategy":"oj_0dte","event":"sl","symbol":"{{ticker}}","action":"close","price":{{close}}}')
+alertcondition(eodHit, 'EOD', '{"strategy":"oj_0dte","event":"eod","symbol":"{{ticker}}","action":"close","price":{{close}}}')
+alertcondition(flipHit, 'FLIP', '{"strategy":"oj_0dte","event":"flip","symbol":"{{ticker}}","action":"close","price":{{close}}}')
 
 if callHit
-    alert('ENTRY CALL ' + entryKind + ' ' + syminfo.ticker + ' ' + str.tostring(close) + ' sl=' + str.tostring(sl) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+    alert(ojJson('entry_call', 'buy', 'long', 'call'), alert.freq_once_per_bar_close)
 if putHit
-    alert('ENTRY PUT ' + entryKind + ' ' + syminfo.ticker + ' ' + str.tostring(close) + ' sl=' + str.tostring(sl) + ' tp1=' + str.tostring(tp1) + ' tp2=' + str.tostring(tp2) + ' tp3=' + str.tostring(tp3), alert.freq_once_per_bar_close)
+    alert(ojJson('entry_put', 'buy', 'short', 'put'), alert.freq_once_per_bar_close)
 if tp1Hit
-    alert('TP1 ' + syminfo.ticker, alert.freq_once_per_bar_close)
+    alert(ojExitJson('tp1'), alert.freq_once_per_bar_close)
 if tp2Hit
-    alert('TP2 ' + syminfo.ticker, alert.freq_once_per_bar_close)
+    alert(ojExitJson('tp2'), alert.freq_once_per_bar_close)
 if tp3Hit
-    alert('TP3 ' + syminfo.ticker, alert.freq_once_per_bar_close)
+    alert(ojExitJson('tp3'), alert.freq_once_per_bar_close)
 if slHit
-    alert('SL ' + syminfo.ticker, alert.freq_once_per_bar_close)
+    alert(ojExitJson('sl'), alert.freq_once_per_bar_close)
 if eodHit
-    alert('EOD FLAT ' + syminfo.ticker, alert.freq_once_per_bar_close)
+    alert(ojExitJson('eod'), alert.freq_once_per_bar_close)
+if flipHit
+    alert(ojExitJson('flip'), alert.freq_once_per_bar_close)
