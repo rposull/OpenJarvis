@@ -36,7 +36,7 @@ from trading_research.execution.spot_scalp import (
     spot_side_from_direction,
 )
 from trading_research.learning.session_learner import SessionLearner
-from trading_research.live.ledger import load_ledger, record_buy, save_ledger
+from trading_research.live.ledger import load_ledger, record_buy, record_sell, save_ledger
 from trading_research.live.session_persistence import load_snapshot, restore_session, save_snapshot
 from trading_research.live.hot_win_prob import win_prob_gate_reason
 from trading_research.live.trade_ledger_sync import sync_trade_ledger_file
@@ -1146,6 +1146,34 @@ def execute_manual_order_now(
     if not row:
         return {"ok": False, "error": f"could not resolve paper order for {symbol}"}
 
+    # Live session owns the book — queue so process_manual_orders fills it.
+    if is_live_session_running(data_dir):
+        order = {
+            "id": f"manual-{int(time.time() * 1000)}",
+            "symbol": row.get("symbol") or internal,
+            "action": action.lower(),
+            "direction": row.get("direction") or direction or "long",
+            "pattern": row.get("pattern") or "manual",
+            "spot": row.get("spot") or price,
+            "market": row.get("market") or mkt,
+            "source": source,
+            "bypass_gates": bool(bypass_gates),
+            "contracts": contracts,
+            "status": "pending",
+            "created_at": time.time(),
+        }
+        path = manual_orders_path(data_dir)
+        q = _load_queue(path)
+        q.append(order)
+        _save_queue(path, q[-50:])
+        return {
+            "ok": True,
+            "queued": True,
+            "status": "queued",
+            "message": f"Queued {action} for live session on {order['symbol']}",
+            "order": order,
+        }
+
     if not bypass_gates:
         news_reject = _check_news_calls_only_gate(row, candidate=row)
         if news_reject:
@@ -1384,6 +1412,9 @@ def submit_tradingview_paper_order(
 
     When ``bypass_gates`` is set (trusted indicator mode), Jarvis's entry gates
     are skipped and the alert's buy/sell fills directly at the alert price.
+
+    If a live session is running, the order is queued for that session's broker
+    so the in-memory book owns the fill (avoids snapshot clobber races).
     """
     s = settings or get_settings()
     s.assert_paper_only()
@@ -1439,6 +1470,37 @@ def submit_tradingview_paper_order(
         )
         if deploy_reject:
             return {"ok": False, "error": deploy_reject, "status": "rejected"}
+
+    # Live session owns the book — queue instead of writing a parallel snapshot.
+    if is_live_session_running(data_dir):
+        order = {
+            "id": f"tv-{int(time.time() * 1000)}",
+            "symbol": candidate.get("symbol") or symbol,
+            "action": action.lower(),
+            "direction": direction,
+            "pattern": candidate.get("pattern") or pattern or "tradingview_alert",
+            "spot": candidate.get("spot") or price,
+            "market": candidate.get("market") or market,
+            "source": source,
+            "bypass_gates": bool(bypass_gates),
+            "contracts": contracts,
+            "levels": dict(levels) if levels else None,
+            "entry_kind": entry_kind or "",
+            "tradingview_symbol": tradingview_symbol,
+            "status": "pending",
+            "created_at": time.time(),
+        }
+        path = manual_orders_path(data_dir)
+        orders = _load_queue(path)
+        orders.append(order)
+        _save_queue(path, orders[-50:])
+        return {
+            "ok": True,
+            "status": "queued",
+            "queued": True,
+            "message": f"Queued {action} for live session on {order['symbol']}",
+            "order": order,
+        }
 
     result = execute_manual_order_now(
         symbol,
@@ -1540,11 +1602,41 @@ def close_tradingview_paper_position(
     if frac <= 0:
         return {"ok": False, "status": "rejected", "error": "qty_fraction must be > 0"}
 
+    # Live session owns the book — queue the close onto that process.
+    if is_live_session_running(data_dir):
+        order = {
+            "id": f"tv-close-{int(time.time() * 1000)}",
+            "symbol": sym,
+            "action": "close",
+            "event": reason.replace("oj_", "") if reason.startswith("oj_") else reason,
+            "reason": reason,
+            "qty_fraction": frac,
+            "spot": price,
+            "price": price,
+            "source": source,
+            "status": "pending",
+            "created_at": time.time(),
+        }
+        path = manual_orders_path(data_dir)
+        orders = _load_queue(path)
+        orders.append(order)
+        _save_queue(path, orders[-50:])
+        return {
+            "ok": True,
+            "status": "queued",
+            "queued": True,
+            "symbol": sym,
+            "reason": reason,
+            "qty_fraction": frac,
+            "message": f"Queued close for live session on {sym}",
+            "source": source,
+        }
+
     from trading_research.config.market_strategy import with_broker_max_open
     from trading_research.execution.exit_engine import ExitAction, apply_partial
     from trading_research.execution.option_premium import estimate_premium
     from trading_research.execution.paper_broker import PaperBroker
-    from trading_research.live.ledger import load_ledger, record_sell, save_ledger
+    from trading_research.live.ledger import load_ledger, save_ledger
     from trading_research.live.session_persistence import load_snapshot, restore_session, save_snapshot
     from trading_research.live.trade_ledger_sync import sync_trade_ledger_file
 
@@ -1739,6 +1831,77 @@ def submit_alpaca_paper_order(
         client.close()
 
 
+def _fill_queued_close_on_session(session: Any, order: Mapping[str, Any]) -> int:
+    """Close open positions for a queued OJ/TV exit on the live session broker."""
+    from trading_research.execution.exit_engine import ExitAction, apply_partial
+    from trading_research.execution.option_premium import estimate_premium
+    from trading_research.live.order_attribution import stamp_exit_channel
+
+    sym = normalize_internal_symbol(
+        str(order.get("symbol") or ""),
+        order.get("market") or infer_market(str(order.get("symbol") or "")),
+    )
+    reason = str(order.get("reason") or order.get("event") or "queued_close")
+    frac = min(1.0, max(0.0, float(order.get("qty_fraction") or 1.0)))
+    price = float(order.get("spot") or order.get("price") or 0) or None
+    targets = [
+        t for t in list(session.broker.positions.values())
+        if str(t.symbol).upper() == sym.upper()
+    ]
+    closed_n = 0
+    for trade in targets:
+        spot = float(price or 0.0)
+        if spot <= 0:
+            spot = resolve_spot_price(sym, infer_market(sym), None, settings=session.s)
+        if trade.kind == "option" and spot > 0:
+            mark = float(estimate_premium(trade, spot))
+        else:
+            mark = spot if spot > 0 else float(trade.entry_price or 0.0)
+        if mark <= 0:
+            continue
+        if frac >= 0.999:
+            closed, _ = session.broker.close_trade(
+                trade.id,
+                mark,
+                reason,
+                exit_channel=str(order.get("source") or "oj_0dte_pine"),
+                log=True,
+            )
+            if closed:
+                record_sell(
+                    session.ledger, closed.to_dict(), ts=time.time(), equity=session.ledger.equity
+                )
+                session.broker.state.equity = session.ledger.equity
+                session.broker.state.cash = session.ledger.equity
+                closed_n += 1
+            continue
+        action = ExitAction(qty_fraction=frac, price=mark, reason=reason)
+        close_qty, fully = apply_partial(trade, action)
+        if close_qty <= 0:
+            continue
+        pnl = session.broker._leg_pnl(trade, mark, close_qty)
+        session.broker.state.equity += pnl
+        session.broker.state.cash += pnl
+        trade.pnl = (trade.pnl or 0.0) + pnl
+        if fully:
+            trade.exit_price = mark
+            trade.exit_reason = reason
+            stamp_exit_channel(trade, str(order.get("source") or "oj_0dte_pine"))
+            trade.status = "closed"
+            trade.closed_at = time.time()
+            session.broker.positions.pop(trade.id, None)
+            session.broker.closed.append(trade)
+            session.broker.state.open_trades = max(0, session.broker.state.open_trades - 1)
+            session.broker.risk.register_close(session.broker.state, trade.pnl or 0.0)
+            record_sell(
+                session.ledger, trade.to_dict(), ts=time.time(), equity=session.ledger.equity
+            )
+            session.broker.state.equity = session.ledger.equity
+            session.broker.state.cash = session.ledger.equity
+            closed_n += 1
+    return closed_n
+
+
 def process_manual_orders(session: Any) -> int:
     """Process pending manual orders on a running LivePaperSession. Returns fill count."""
     path = manual_orders_path(session.data_dir)
@@ -1752,9 +1915,25 @@ def process_manual_orders(session: Any) -> int:
         if order.get("status") != "pending":
             continue
         sym = str(order.get("symbol") or "")
-        action = str(order.get("action") or "buy")
+        action = str(order.get("action") or "buy").lower()
         scout_conf = order.get("scout_confidence")
         order_source = str(order.get("source") or "")
+        bypass = bool(order.get("bypass_gates"))
+
+        # OJ / TV explicit closes — fill on the live broker, not a stub snapshot.
+        if action in ("close", "exit", "flat", "flatten") or str(
+            order.get("event") or ""
+        ).lower() in ("tp1", "tp2", "tp3", "sl", "eod", "flip"):
+            closed_n = _fill_queued_close_on_session(session, order)
+            order["status"] = "filled"
+            order["filled_at"] = time.time()
+            order["closed"] = closed_n
+            if closed_n == 0:
+                order["message"] = "no open position"
+            filled += closed_n
+            changed = True
+            continue
+
         candidate = find_hot_candidate(sym, session.data_dir) or {
             "symbol": sym,
             "direction": order.get("direction") or "long",
@@ -1779,6 +1958,7 @@ def process_manual_orders(session: Any) -> int:
             candidate["spot"] = resolve_spot_price(
                 sym,
                 str(candidate.get("market") or "crypto"),
+                float(order.get("spot") or 0) or None,
                 settings=session.s,
             )
         if float(candidate.get("spot") or 0) <= 0:
@@ -1787,54 +1967,40 @@ def process_manual_orders(session: Any) -> int:
             changed = True
             continue
 
-        result = execute_manual_order_now(
-            sym,
-            action,
-            settings=session.s,
-            source=order_source or str(order.get("source") or "pending_flush"),
-            candidate=candidate,
-        )
-        if result.get("ok"):
-            order["status"] = "filled"
-            order["filled_at"] = time.time()
-            order["trade_id"] = result.get("trade_id")
-            filled += 1
-        else:
-            order["status"] = "failed"
-            order["error"] = result.get("error") or "immediate execute failed"
-        changed = True
-        continue
+        if not bypass:
+            reject = _check_market_gates(
+                sym,
+                candidate.get("market"),
+                settings=session.s,
+                data_dir=session.data_dir,
+                positions=session.broker.positions,
+            )
+            if reject:
+                order["status"] = "failed"
+                order["error"] = reject
+                changed = True
+                continue
 
-        reject = _check_market_gates(
-            sym,
-            candidate.get("market"),
-            settings=session.s,
-            data_dir=session.data_dir,
-            positions=session.broker.positions,
-        )
-        if reject:
-            order["status"] = "failed"
-            order["error"] = reject
-            changed = True
-            continue
-
-        reject = _check_win_prob_gate(
-            candidate,
-            settings=session.s,
-            learner=session.session,
-            market=candidate.get("market"),
-            source=order_source or order.get("source"),
-            data_dir=session.data_dir,
-        )
-        if reject:
-            order["status"] = "failed"
-            order["error"] = reject
-            changed = True
-            continue
+            reject = _check_win_prob_gate(
+                candidate,
+                settings=session.s,
+                learner=session.session,
+                market=candidate.get("market"),
+                source=order_source or order.get("source"),
+                data_dir=session.data_dir,
+            )
+            if reject:
+                order["status"] = "failed"
+                order["error"] = reject
+                changed = True
+                continue
 
         try:
             payload = build_manual_trade_payload(
-                candidate, action, settings=session.s, data_dir=session.data_dir
+                candidate,
+                "buy" if action not in ("sell",) else "sell",
+                settings=session.s,
+                data_dir=session.data_dir,
             )
         except ValueError as exc:
             order["status"] = "failed"
@@ -1842,29 +2008,42 @@ def process_manual_orders(session: Any) -> int:
             changed = True
             continue
 
-        deploy_reject = _check_equity_deploy_gate(
-            settings=session.s,
-            equity=session.ledger.equity,
-            payload=payload,
-            data_dir=session.data_dir,
-            positions=session.broker.positions,
-        )
-        if deploy_reject:
-            order["status"] = "failed"
-            order["error"] = deploy_reject
-            changed = True
-            continue
+        if order.get("contracts") is not None and payload.get("kind") == "option":
+            try:
+                payload["option"]["contracts"] = int(order["contracts"])
+            except (TypeError, ValueError, KeyError):
+                pass
+
+        if not bypass:
+            deploy_reject = _check_equity_deploy_gate(
+                settings=session.s,
+                equity=session.ledger.equity,
+                payload=payload,
+                data_dir=session.data_dir,
+                positions=session.broker.positions,
+            )
+            if deploy_reject:
+                order["status"] = "failed"
+                order["error"] = deploy_reject
+                changed = True
+                continue
 
         from trading_research.execution.entry_bar_meta import stamp_entry_bar_meta
 
         candles = session.candles_by.get(sym) or []
-        trade, msg = open_manual_trade(session.broker, payload, candles=candles)
+        trade, msg = open_manual_trade(
+            session.broker,
+            payload,
+            candles=candles,
+            ignore_daily_limits=bypass,
+        )
         if not trade:
             order["status"] = "failed"
             order["error"] = msg or "broker rejected"
             changed = True
             continue
 
+        # Fill on the live session broker (never stub-snapshot while session runs).
         stamp_entry_bar_meta(
             trade,
             candles,
@@ -1887,6 +2066,17 @@ def process_manual_orders(session: Any) -> int:
         trade.meta["entry_live_ts"] = time.time()
         trade.meta["entry_day"] = time.strftime("%Y-%m-%d", time.gmtime())
         trade.meta["chart_pattern"] = candidate.get("pattern") or ""
+        if bypass:
+            trade.meta["gates_bypassed"] = True
+        if order.get("levels"):
+            trade.meta["oj_strategy"] = "oj_0dte"
+            for key, raw in dict(order.get("levels") or {}).items():
+                try:
+                    val = float(raw) if raw is not None else None
+                except (TypeError, ValueError):
+                    val = None
+                if val is not None and val > 0:
+                    trade.meta[f"oj_{key}"] = val
         from trading_research.live.order_attribution import stamp_entry_source
 
         stamp_entry_source(trade, str(order.get("source") or "ui_hot_symbol"))
