@@ -550,6 +550,8 @@ def build_manual_order_kwargs(
         reason=reason,
         settings=s,
         atr=atr_val,
+        symbol=sym,
+        prefer_live_premium=True,
     )
     kw["symbol"] = sym
     kw["chart_pattern"] = str(pattern)
@@ -663,7 +665,7 @@ def open_manual_trade(
     extra_meta = {
         k: kw.pop(k)
         for k in list(kw.keys())
-        if k in ("symbol_math", "symbol_math_score", "chart_pattern")
+        if k in ("symbol_math", "symbol_math_score", "chart_pattern", "live_quote")
     }
     trade, msg = broker.open_option(**kw, log=True, ignore_daily_limits=ignore_daily_limits)
     if trade:
@@ -677,6 +679,12 @@ def open_manual_trade(
             trade.meta["symbol_math_score"] = extra_meta["symbol_math_score"]
         if extra_meta.get("chart_pattern"):
             trade.meta["chart_pattern"] = extra_meta["chart_pattern"]
+        live_q = extra_meta.get("live_quote")
+        if isinstance(live_q, dict):
+            trade.meta["live_quote"] = live_q
+            trade.meta["premium_source"] = "atm_chain"
+            if live_q.get("expiration"):
+                trade.meta["option_expiration"] = live_q["expiration"]
     return trade, msg
 
 
@@ -1146,6 +1154,13 @@ def execute_manual_order_now(
     if not row:
         return {"ok": False, "error": f"could not resolve paper order for {symbol}"}
 
+    ok_sym, sym_reason = stock_symbol_allowed(
+        str(row.get("symbol") or internal),
+        row.get("market") or mkt,
+    )
+    if not ok_sym:
+        return {"ok": False, "error": sym_reason, "status": "rejected"}
+
     # Live session owns the book — queue so process_manual_orders fills it.
     if is_live_session_running(data_dir):
         order = {
@@ -1412,6 +1427,7 @@ def submit_tradingview_paper_order(
 
     When ``bypass_gates`` is set (trusted indicator mode), Jarvis's entry gates
     are skipped and the alert's buy/sell fills directly at the alert price.
+    Stock ``symbol_whitelist`` still applies (universe filter, not a soft gate).
 
     If a live session is running, the order is queued for that session's broker
     so the in-memory book owns the fill (avoids snapshot clobber races).
@@ -1430,6 +1446,14 @@ def submit_tradingview_paper_order(
         pattern=pattern,
         entry_kind=entry_kind or "",
     )
+
+    # Universe filter always on — trust_indicator must not open non-whitelist names.
+    ok_sym, sym_reason = stock_symbol_allowed(
+        str(candidate.get("symbol") or symbol),
+        candidate.get("market") or market,
+    )
+    if not ok_sym:
+        return {"ok": False, "error": sym_reason, "status": "rejected"}
 
     if not bypass_gates:
         stock_reject = _check_stock_gates(symbol, market, settings=s, data_dir=data_dir)
@@ -1964,6 +1988,14 @@ def process_manual_orders(session: Any) -> int:
         if float(candidate.get("spot") or 0) <= 0:
             order["status"] = "failed"
             order["error"] = "missing spot price"
+            changed = True
+            continue
+
+        # Whitelist always — even when OJ/TV bypasses soft gates.
+        ok_sym, sym_reason = stock_symbol_allowed(sym, candidate.get("market"))
+        if not ok_sym:
+            order["status"] = "failed"
+            order["error"] = sym_reason
             changed = True
             continue
 
