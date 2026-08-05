@@ -19,7 +19,8 @@ def test_normalize_action_variants():
     assert normalize_action("short") == "sell"
     assert normalize_action("SELL") == "sell"
     assert normalize_action("close") == "close"
-    assert normalize_action("tp1") == "close"
+    assert normalize_action("tp1") == "suggest"
+    assert normalize_action("tp_break") == "close"
     assert normalize_action("unknown") is None
 
 
@@ -56,6 +57,58 @@ def test_parse_oj_exit_from_message_json():
     assert parsed["event"] == "sl"
     assert parsed["action"] == "close"
     assert parsed["internal_symbol"] == "TQQQ"
+
+
+def test_parse_oj_tp_suggest_not_close():
+    body = {
+        "strategy": "oj_0dte",
+        "event": "tp1",
+        "symbol": "SPY",
+        "action": "suggest",
+        "price": 765.0,
+    }
+    parsed = parse_alert_payload(body)
+    assert parsed["event"] == "tp1"
+    assert parsed["action"] == "suggest"
+
+
+def test_execute_oj_tp_suggest_does_not_sell(monkeypatch):
+    from openjarvis.trading import tradingview_automation as tv
+
+    monkeypatch.setattr(
+        tv,
+        "load_tradingview_config",
+        lambda: {
+            "only_oj_pine": True,
+            "oj_strategy": "oj_0dte",
+            "allowed_markets": ["stocks"],
+            "trust_indicator": True,
+            "execution_broker": "internal",
+            "default_qty": 1,
+        },
+    )
+    called = {"close": 0}
+
+    def _boom(*_a, **_k):
+        called["close"] += 1
+        raise AssertionError("TP suggest must not close")
+
+    monkeypatch.setattr(
+        "trading_research.live.manual_orders.close_tradingview_paper_position",
+        _boom,
+    )
+    out = tv.execute_alert_paper_trade(
+        {
+            "internal_symbol": "SPY",
+            "market": "stock",
+            "action": "suggest",
+            "strategy": "oj_0dte",
+            "event": "tp2",
+        }
+    )
+    assert out["ok"] is True
+    assert out["status"] == "suggestion"
+    assert called["close"] == 0
 
 
 def test_parse_legacy_entry_call_text():

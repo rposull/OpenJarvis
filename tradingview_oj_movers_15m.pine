@@ -1,7 +1,8 @@
 //@version=6
 indicator('OJ 0DTE 15m', overlay=true, max_labels_count=500, max_lines_count=50)
 
-// 0DTE: ORB morning · EMA wait later · scale TP1/2/3 · flat 15:45 NY
+// 0DTE: ORB morning · EMA wait later · TP1/2/3 suggestions · hold to EOD
+// unless prior TP breaks (full profit exit) · SL · flat 15:45 NY
 emaFastLen = input.int(5, 'Fast EMA')
 emaSlowLen = input.int(21, 'Slow EMA')
 atrLen     = input.int(14, 'ATR')
@@ -91,12 +92,14 @@ var string entryKind = ''
 var bool tp1Done = false
 var bool tp2Done = false
 var bool tp3Done = false
+var int tpHitLvl = 0
 
 callHit = false
 putHit = false
 tp1Hit = false
 tp2Hit = false
 tp3Hit = false
+tpBreakHit = false
 slHit = false
 eodHit = false
 flipHit = false
@@ -106,40 +109,61 @@ if inPos and (newDay or pastFlat)
     inPos := false
     side := ''
     pend := 0
+    tpHitLvl := 0
 
 if inPos and side == 'CALL'
-    if not tp1Done and high >= tp1
-        tp1Hit := true
-        tp1Done := true
-    if not tp2Done and high >= tp2
-        tp2Hit := true
-        tp2Done := true
-    if not tp3Done and high >= tp3
-        tp3Hit := true
-        tp3Done := true
+    priorLvl = tpHitLvl
+    trail = priorLvl == 3 ? tp3 : priorLvl == 2 ? tp2 : priorLvl == 1 ? tp1 : na
+    if priorLvl >= 1 and not na(trail) and low < trail
+        tpBreakHit := true
         inPos := false
         side := ''
+        tpHitLvl := 0
     if inPos and low <= sl
         slHit := true
         inPos := false
         side := ''
+        tpHitLvl := 0
+    if inPos
+        if high >= tp1 and not tp1Done
+            tp1Hit := true
+            tp1Done := true
+            tpHitLvl := math.max(tpHitLvl, 1)
+        if high >= tp2 and not tp2Done
+            tp2Hit := true
+            tp2Done := true
+            tpHitLvl := math.max(tpHitLvl, 2)
+        if high >= tp3 and not tp3Done
+            tp3Hit := true
+            tp3Done := true
+            tpHitLvl := 3
 
 if inPos and side == 'PUT'
-    if not tp1Done and low <= tp1
-        tp1Hit := true
-        tp1Done := true
-    if not tp2Done and low <= tp2
-        tp2Hit := true
-        tp2Done := true
-    if not tp3Done and low <= tp3
-        tp3Hit := true
-        tp3Done := true
+    priorLvl = tpHitLvl
+    trail = priorLvl == 3 ? tp3 : priorLvl == 2 ? tp2 : priorLvl == 1 ? tp1 : na
+    if priorLvl >= 1 and not na(trail) and high > trail
+        tpBreakHit := true
         inPos := false
         side := ''
+        tpHitLvl := 0
     if inPos and high >= sl
         slHit := true
         inPos := false
         side := ''
+        tpHitLvl := 0
+    if inPos
+        if low <= tp1 and not tp1Done
+            tp1Hit := true
+            tp1Done := true
+            tpHitLvl := math.max(tpHitLvl, 1)
+        if low <= tp2 and not tp2Done
+            tp2Hit := true
+            tp2Done := true
+            tpHitLvl := math.max(tpHitLvl, 2)
+        if low <= tp3 and not tp3Done
+            tp3Hit := true
+            tp3Done := true
+            tpHitLvl := 3
 
 goCall = (orbCall or emaCall) and (not inPos or side == 'PUT')
 goPut  = (orbPut or emaPut) and (not inPos or side == 'CALL')
@@ -166,6 +190,7 @@ if goCall
         tp1Done := false
         tp2Done := false
         tp3Done := false
+        tpHitLvl := 0
         pend := 0
         if orbCall
             orbUsed := true
@@ -192,6 +217,7 @@ if goPut
         tp1Done := false
         tp2Done := false
         tp3Done := false
+        tpHitLvl := 0
         pend := 0
         if orbPut
             orbUsed := true
@@ -214,6 +240,7 @@ plot(inPos ? tp3 : na, 'TP3', color=color.new(#00c853, 0), style=plot.style_line
 plotshape(callHit, title='CALL', style=shape.labelup, location=location.belowbar, color=color.lime, text='CALL', textcolor=color.white, size=size.small)
 plotshape(putHit, title='PUT', style=shape.labeldown, location=location.abovebar, color=color.red, text='PUT', textcolor=color.white, size=size.small)
 plotshape(slHit, title='SL', style=shape.xcross, location=location.belowbar, color=color.red, text='SL', textcolor=color.white, size=size.tiny)
+plotshape(tpBreakHit, title='TP BREAK', style=shape.xcross, location=location.belowbar, color=color.orange, text='TP↓', textcolor=color.white, size=size.tiny)
 plotshape(eodHit, title='EOD', style=shape.xcross, location=location.abovebar, color=color.gray, text='EOD', textcolor=color.white, size=size.tiny)
 
 // Mark TP hits on the chart at the TP price
@@ -256,14 +283,18 @@ if barstate.islast
 ojJson(string event, string act, string dir, string right) =>
     '{"strategy":"oj_0dte","event":"' + event + '","symbol":"' + syminfo.ticker + '","action":"' + act + '","direction":"' + dir + '","right":"' + right + '","price":' + str.tostring(close) + ',"sl":' + str.tostring(sl) + ',"tp1":' + str.tostring(tp1) + ',"tp2":' + str.tostring(tp2) + ',"tp3":' + str.tostring(tp3) + ',"entry_kind":"' + entryKind + '"}'
 
+ojSuggestJson(string event) =>
+    '{"strategy":"oj_0dte","event":"' + event + '","symbol":"' + syminfo.ticker + '","action":"suggest","price":' + str.tostring(close) + '}'
+
 ojExitJson(string event) =>
     '{"strategy":"oj_0dte","event":"' + event + '","symbol":"' + syminfo.ticker + '","action":"close","price":' + str.tostring(close) + '}'
 
 alertcondition(callHit, 'ENTRY CALL', '{"strategy":"oj_0dte","event":"entry_call","symbol":"{{ticker}}","action":"buy","direction":"long","right":"call","price":{{close}}}')
 alertcondition(putHit, 'ENTRY PUT', '{"strategy":"oj_0dte","event":"entry_put","symbol":"{{ticker}}","action":"buy","direction":"short","right":"put","price":{{close}}}')
-alertcondition(tp1Hit, 'TP1', '{"strategy":"oj_0dte","event":"tp1","symbol":"{{ticker}}","action":"close","price":{{close}}}')
-alertcondition(tp2Hit, 'TP2', '{"strategy":"oj_0dte","event":"tp2","symbol":"{{ticker}}","action":"close","price":{{close}}}')
-alertcondition(tp3Hit, 'TP3', '{"strategy":"oj_0dte","event":"tp3","symbol":"{{ticker}}","action":"close","price":{{close}}}')
+alertcondition(tp1Hit, 'TP1 suggest', '{"strategy":"oj_0dte","event":"tp1","symbol":"{{ticker}}","action":"suggest","price":{{close}}}')
+alertcondition(tp2Hit, 'TP2 suggest', '{"strategy":"oj_0dte","event":"tp2","symbol":"{{ticker}}","action":"suggest","price":{{close}}}')
+alertcondition(tp3Hit, 'TP3 suggest', '{"strategy":"oj_0dte","event":"tp3","symbol":"{{ticker}}","action":"suggest","price":{{close}}}')
+alertcondition(tpBreakHit, 'TP BREAK', '{"strategy":"oj_0dte","event":"tp_break","symbol":"{{ticker}}","action":"close","price":{{close}}}')
 alertcondition(slHit, 'SL', '{"strategy":"oj_0dte","event":"sl","symbol":"{{ticker}}","action":"close","price":{{close}}}')
 alertcondition(eodHit, 'EOD', '{"strategy":"oj_0dte","event":"eod","symbol":"{{ticker}}","action":"close","price":{{close}}}')
 alertcondition(flipHit, 'FLIP', '{"strategy":"oj_0dte","event":"flip","symbol":"{{ticker}}","action":"close","price":{{close}}}')
@@ -273,11 +304,13 @@ if callHit
 if putHit
     alert(ojJson('entry_put', 'buy', 'short', 'put'), alert.freq_once_per_bar_close)
 if tp1Hit
-    alert(ojExitJson('tp1'), alert.freq_once_per_bar_close)
+    alert(ojSuggestJson('tp1'), alert.freq_once_per_bar_close)
 if tp2Hit
-    alert(ojExitJson('tp2'), alert.freq_once_per_bar_close)
+    alert(ojSuggestJson('tp2'), alert.freq_once_per_bar_close)
 if tp3Hit
-    alert(ojExitJson('tp3'), alert.freq_once_per_bar_close)
+    alert(ojSuggestJson('tp3'), alert.freq_once_per_bar_close)
+if tpBreakHit
+    alert(ojExitJson('tp_break'), alert.freq_once_per_bar_close)
 if slHit
     alert(ojExitJson('sl'), alert.freq_once_per_bar_close)
 if eodHit

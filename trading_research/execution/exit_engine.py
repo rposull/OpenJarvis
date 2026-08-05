@@ -104,7 +104,7 @@ def _is_losing_mark(trade: PaperTrade, mark: float) -> bool:
 
 
 def is_oj_trade(trade: PaperTrade) -> bool:
-    """True for OJ 0DTE Pine paper trades — exits are TP/SL/EOD only."""
+    """True for OJ 0DTE Pine paper trades — exits are EOD / SL / TP-break only."""
     m = _meta(trade)
     blob = " ".join(
         str(m.get(k) or "")
@@ -144,6 +144,13 @@ def _oj_mark_premium(trade: PaperTrade, under: float) -> float:
     return float(estimate_premium(trade, under))
 
 
+def _oj_tp_level(trade: PaperTrade, hit: int) -> Optional[float]:
+    if hit <= 0:
+        return None
+    key = {1: "tp1", 2: "tp2", 3: "tp3"}.get(int(hit))
+    return _oj_under_level(trade, key) if key else None
+
+
 def check_oj_underlying_exits(
     trade: PaperTrade,
     *,
@@ -153,7 +160,12 @@ def check_oj_underlying_exits(
     bar_hm: Optional[int] = None,
     settings: Optional[Settings] = None,
 ) -> List[ExitAction]:
-    """OJ Pine exits: TP1 / TP2 / TP3 / SL / EOD only (no time_take / loss_cut)."""
+    """OJ Pine exits: hold full size to EOD unless SL or a prior TP is broken.
+
+    TP1/TP2/TP3 are suggestion milestones only — touching them never scales out.
+    After a TP has been tagged on a prior bar, a break back through that level
+    exits the full position for profit at that TP mark.
+    """
     s = settings or get_settings()
     m = _meta(trade)
     right = str(m.get("right") or "call").lower()
@@ -168,45 +180,58 @@ def check_oj_underlying_exits(
     if bar_hm is not None and bar_hm >= eod_hm:
         return [ExitAction(1.0, _oj_mark_premium(trade, last), "eod")]
 
-    tp1_frac = float(getattr(s, "oj_tp1_exit_pct", None) or m.get("oj_tp1_exit_pct") or 0.50)
-    tp2_frac = float(getattr(s, "oj_tp2_exit_pct", None) or m.get("oj_tp2_exit_pct") or 0.50)
-    tp1_frac = min(1.0, max(0.0, tp1_frac))
-    tp2_frac = min(1.0, max(0.0, tp2_frac))
+    try:
+        prior_hit = int(m.get("oj_tp_hit") or 0)
+    except (TypeError, ValueError):
+        prior_hit = 0
+    prior_hit = max(0, min(3, prior_hit))
 
-    if right == "put":
-        if not m.get("tp1_filled") and low <= tp1:
+    # Break of a previously tagged TP → full profit exit (never same-bar first touch).
+    trail = _oj_tp_level(trade, prior_hit)
+    if trail is not None:
+        broken = (low < trail) if right != "put" else (high > trail)
+        if broken:
             return [
                 ExitAction(
-                    tp1_frac,
-                    _oj_mark_premium(trade, tp1),
-                    "tp1",
-                    move_stop_to=trade.entry_price,
+                    1.0,
+                    _oj_mark_premium(trade, trail),
+                    f"tp{prior_hit}_break",
                 )
             ]
-        if m.get("tp1_filled") and not m.get("tp2_filled") and tp2 and low <= tp2:
-            return [ExitAction(tp2_frac, _oj_mark_premium(trade, tp2), "tp2")]
-        if tp3 and low <= tp3:
-            return [ExitAction(1.0, _oj_mark_premium(trade, tp3), "tp3")]
+
+    # Hard stop — only when no TP-break fired.
+    if right == "put":
         if high >= sl:
             return [ExitAction(1.0, _oj_mark_premium(trade, sl), "sl")]
-        return []
-
-    # call
-    if not m.get("tp1_filled") and high >= tp1:
-        return [
-            ExitAction(
-                tp1_frac,
-                _oj_mark_premium(trade, tp1),
-                "tp1",
-                move_stop_to=trade.entry_price,
-            )
-        ]
-    if m.get("tp1_filled") and not m.get("tp2_filled") and tp2 and high >= tp2:
-        return [ExitAction(tp2_frac, _oj_mark_premium(trade, tp2), "tp2")]
-    if tp3 and high >= tp3:
-        return [ExitAction(1.0, _oj_mark_premium(trade, tp3), "tp3")]
-    if low <= sl:
+    elif low <= sl:
         return [ExitAction(1.0, _oj_mark_premium(trade, sl), "sl")]
+
+    # Tag TP suggestions (no sell).
+    hit = prior_hit
+    if right == "put":
+        if tp3 is not None and low <= tp3:
+            hit = 3
+        elif tp2 is not None and low <= tp2:
+            hit = max(hit, 2)
+        elif low <= tp1:
+            hit = max(hit, 1)
+    else:
+        if tp3 is not None and high >= tp3:
+            hit = 3
+        elif tp2 is not None and high >= tp2:
+            hit = max(hit, 2)
+        elif high >= tp1:
+            hit = max(hit, 1)
+    if hit > prior_hit:
+        m["oj_tp_hit"] = hit
+        if hit >= 1:
+            m["tp1_suggest"] = True
+        if hit >= 2:
+            m["tp2_suggest"] = True
+        if hit >= 3:
+            m["tp3_suggest"] = True
+        if bar_hm is not None:
+            m["oj_tp_hit_hm"] = int(bar_hm)
     return []
 
 
@@ -216,6 +241,7 @@ def init_trade_meta(trade: PaperTrade, settings: Optional[Settings] = None) -> N
     m = _meta(trade)
     m.setdefault("qty_remaining", trade.qty)
     m.setdefault("tp1_filled", False)
+    m.setdefault("oj_tp_hit", 0)
     m.setdefault("trailing_active", False)
     m.setdefault("peak_price", trade.entry_price)
     m.setdefault("trough_price", trade.entry_price)
@@ -279,7 +305,7 @@ def check_exits(
     m = _meta(trade)
     actions: List[ExitAction] = []
 
-    # OJ 0DTE: hold for TP1/TP2/TP3, SL, or EOD only — never time_take / loss_cut.
+    # OJ 0DTE: EOD / SL / prior-TP break only — TP touches are suggestions (no scale-out).
     if is_oj_trade(trade):
         u_h = underlying_high
         u_l = underlying_low

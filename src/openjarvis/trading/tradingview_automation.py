@@ -14,9 +14,11 @@ from openjarvis.trading.symbol_map import from_tradingview, map_symbol_response
 
 _BUY_ACTIONS = frozenset({"buy", "long", "bull", "bullish", "enter_long"})
 _SELL_ACTIONS = frozenset({"sell", "short", "bear", "bearish", "enter_short"})
-_CLOSE_ACTIONS = frozenset({"close", "exit", "flat", "flatten", "eod", "sl", "tp1", "tp2", "tp3", "flip"})
+_CLOSE_ACTIONS = frozenset({"close", "exit", "flat", "flatten", "eod", "sl", "tp_break", "flip"})
 _OJ_STRATEGY = "oj_0dte"
-_OJ_EXIT_EVENTS = frozenset({"tp1", "tp2", "tp3", "sl", "eod", "flip", "close", "exit"})
+# Hard exits only — tp1/tp2/tp3 are suggestion milestones (never auto-sell).
+_OJ_EXIT_EVENTS = frozenset({"sl", "eod", "flip", "close", "exit", "tp_break"})
+_OJ_TP_SUGGEST_EVENTS = frozenset({"tp1", "tp2", "tp3"})
 _OJ_ENTRY_EVENTS = frozenset({"entry_call", "entry_put", "call", "put"})
 
 
@@ -248,16 +250,20 @@ def _parse_message_json(message: str) -> Dict[str, Any]:
 
 
 def normalize_action(raw: Optional[str]) -> Optional[str]:
-    """Map TradingView action strings to buy/sell/close."""
+    """Map TradingView action strings to buy/sell/close/suggest."""
     if not raw:
         return None
     val = str(raw).strip().lower()
+    if val in _OJ_TP_SUGGEST_EVENTS:
+        return "suggest"
     if val in _CLOSE_ACTIONS:
         return "close"
     if val in _BUY_ACTIONS:
         return "buy"
     if val in _SELL_ACTIONS:
         return "sell"
+    if val == "suggest":
+        return "suggest"
     return None
 
 
@@ -268,8 +274,11 @@ def _action_from_text(text: str) -> Optional[str]:
         return "buy"
     if re.search(r"\bentry\s+put\b|\bput\b", lower):
         return "buy"
-    if re.search(r"\b(tp1|tp2|tp3|sl|eod|flip|flat|close|exit)\b", lower):
+    # TP touches are suggestions — not closes. tp_break / SL / EOD / flip are closes.
+    if re.search(r"\b(tp_break|sl|eod|flip|flat|close|exit)\b", lower):
         return "close"
+    if re.search(r"\b(tp1|tp2|tp3)\b", lower):
+        return "suggest"
     for word in ("buy", "long", "bullish"):
         if re.search(rf"\b{word}\b", lower):
             return "buy"
@@ -282,7 +291,7 @@ def _action_from_text(text: str) -> Optional[str]:
 def _oj_event_from_merged(merged: Dict[str, Any], msg: str) -> Optional[str]:
     """Resolve OJ Pine event name from JSON fields or legacy free-text."""
     raw = str(merged.get("event") or merged.get("signal") or "").strip().lower()
-    if raw in _OJ_ENTRY_EVENTS or raw in _OJ_EXIT_EVENTS:
+    if raw in _OJ_ENTRY_EVENTS or raw in _OJ_EXIT_EVENTS or raw in _OJ_TP_SUGGEST_EVENTS:
         return "entry_call" if raw == "call" else "entry_put" if raw == "put" else raw
     right = str(merged.get("right") or "").strip().lower()
     action = str(merged.get("action") or "").strip().lower()
@@ -293,15 +302,15 @@ def _oj_event_from_merged(merged: Dict[str, Any], msg: str) -> Optional[str]:
     lower = (msg or "").lower()
     if re.search(r"\bentry\s+call\b", lower) or (
         re.search(r"\bcall\b", lower) and "put" not in lower
-        and not re.search(r"\b(tp1|tp2|tp3|sl|eod|flip)\b", lower)
+        and not re.search(r"\b(tp1|tp2|tp3|tp_break|sl|eod|flip)\b", lower)
     ):
         return "entry_call"
     if re.search(r"\bentry\s+put\b", lower) or (
         re.search(r"\bput\b", lower)
-        and not re.search(r"\b(tp1|tp2|tp3|sl|eod|flip)\b", lower)
+        and not re.search(r"\b(tp1|tp2|tp3|tp_break|sl|eod|flip)\b", lower)
     ):
         return "entry_put"
-    for ev in ("tp1", "tp2", "tp3", "eod", "flip", "sl"):
+    for ev in ("tp_break", "tp1", "tp2", "tp3", "eod", "flip", "sl"):
         if re.search(rf"\b{ev}\b", lower):
             return ev
     if re.search(r"\b(flat|close|exit)\b", lower):
@@ -367,6 +376,8 @@ def parse_alert_payload(body: Dict[str, Any]) -> Dict[str, Any]:
     )
     if oj_event in _OJ_EXIT_EVENTS:
         action = "close"
+    elif oj_event in _OJ_TP_SUGGEST_EVENTS:
+        action = "suggest"
     elif oj_event in _OJ_ENTRY_EVENTS:
         action = "buy"
     if not action:
@@ -437,13 +448,31 @@ def execute_alert_paper_trade(parsed: Dict[str, Any]) -> Dict[str, Any]:
     strategy = str(parsed.get("strategy") or "").strip().lower()
     event = str(parsed.get("event") or "").strip().lower() or None
     oj_name = str(cfg.get("oj_strategy") or _OJ_STRATEGY).strip().lower()
-    is_oj = strategy == oj_name or (event in _OJ_ENTRY_EVENTS or event in _OJ_EXIT_EVENTS)
+    is_oj = strategy == oj_name or (
+        event in _OJ_ENTRY_EVENTS
+        or event in _OJ_EXIT_EVENTS
+        or event in _OJ_TP_SUGGEST_EVENTS
+    )
 
     if bool(cfg.get("only_oj_pine", True)) and not is_oj:
         return {
             "ok": False,
             "status": "rejected",
             "error": "only OJ 0DTE Pine alerts are allowed (strategy=oj_0dte)",
+        }
+
+    # TP1/TP2/TP3 are suggestion milestones — acknowledge, never sell.
+    if event in _OJ_TP_SUGGEST_EVENTS or action == "suggest":
+        return {
+            "ok": True,
+            "status": "suggestion",
+            "event": event or action,
+            "symbol": symbol,
+            "message": (
+                f"TP {(event or 'touch')} noted as suggestion — holding full size "
+                "until EOD, SL, or prior-TP break"
+            ),
+            "source": "oj_0dte_pine",
         }
 
     if action not in ("buy", "sell", "close"):
@@ -487,15 +516,10 @@ def execute_alert_paper_trade(parsed: Dict[str, Any]) -> Dict[str, Any]:
     direction = parsed.get("direction") or ("long" if action == "buy" else "short")
 
     if action == "close" or event in _OJ_EXIT_EVENTS:
-        frac = 1.0
-        if event == "tp1":
-            frac = float(cfg.get("oj_tp1_exit_pct") or 0.5)
-        elif event == "tp2":
-            frac = float(cfg.get("oj_tp2_exit_pct") or 0.5)
         return close_tradingview_paper_position(
             symbol=symbol,
             reason=f"oj_{event or 'close'}",
-            qty_fraction=frac,
+            qty_fraction=1.0,
             price=parsed.get("price"),
             settings=settings,
             source=source,

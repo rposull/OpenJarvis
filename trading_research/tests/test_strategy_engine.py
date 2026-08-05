@@ -118,7 +118,7 @@ def test_exit_engine_oj_skips_time_take_and_loss_cut():
     t.bars_held = 99
     # Premium path would time_take; OJ without underlying must hold.
     assert check_exits(t, high=0.80, low=0.70, last=0.78, atr=0.0, settings=s) == []
-    # Underlying TP1 fires.
+    # Underlying TP1 touch is a suggestion only — no sell.
     actions = check_exits(
         t,
         high=0.80,
@@ -131,8 +131,125 @@ def test_exit_engine_oj_skips_time_take_and_loss_cut():
         underlying_last=764.7,
         bar_hm=1000,
     )
+    assert actions == []
+    assert int(t.meta.get("oj_tp_hit") or 0) == 1
+
+
+def test_exit_engine_oj_tp_break_sells_full():
+    s = Settings()
+    t = PaperTrade(
+        symbol="SPY",
+        market="stock",
+        side=LONG,
+        qty=1,
+        entry_price=0.76,
+        stop=0.38,
+        tp1=1.2,
+        tp2=1.8,
+        kind="option",
+        meta={
+            "action": "buy",
+            "right": "call",
+            "oj_strategy": "oj_0dte",
+            "underlying": 763.39,
+            "oj_underlying_stop": 760.9,
+            "oj_underlying_tp1": 764.64,
+            "oj_underlying_tp2": 765.88,
+            "oj_underlying_tp3": 767.13,
+            "oj_tp_hit": 2,
+        },
+    )
+    init_trade_meta(t, s)
+    # Prior TP2 tagged; this bar breaks back through TP2 → full profit exit.
+    actions = check_exits(
+        t,
+        high=0.9,
+        low=0.7,
+        last=0.75,
+        atr=0.0,
+        settings=s,
+        underlying_high=766.0,
+        underlying_low=765.5,
+        underlying_last=765.6,
+        bar_hm=1100,
+    )
     assert len(actions) == 1
-    assert actions[0].reason == "tp1"
+    assert actions[0].reason == "tp2_break"
+    assert actions[0].qty_fraction == 1.0
+
+
+def test_exit_engine_oj_hold_through_tp_to_eod():
+    s = Settings()
+    t = PaperTrade(
+        symbol="QQQ",
+        market="stock",
+        side=LONG,
+        qty=1,
+        entry_price=0.99,
+        stop=0.5,
+        tp1=1.5,
+        tp2=2.0,
+        kind="option",
+        meta={
+            "action": "buy",
+            "right": "call",
+            "oj_strategy": "oj_0dte",
+            "underlying": 713.65,
+            "oj_underlying_stop": 710.64,
+            "oj_underlying_tp1": 715.16,
+            "oj_underlying_tp2": 716.66,
+            "oj_underlying_tp3": 718.17,
+        },
+    )
+    init_trade_meta(t, s)
+    # Tag TP3 on this bar (no sell even though low is below TP3 — first touch).
+    assert (
+        check_exits(
+            t,
+            high=1.0,
+            low=0.9,
+            last=0.95,
+            atr=0.0,
+            settings=s,
+            underlying_high=720.0,
+            underlying_low=717.0,
+            underlying_last=719.0,
+            bar_hm=1115,
+        )
+        == []
+    )
+    assert int(t.meta.get("oj_tp_hit") or 0) == 3
+    # Next bar still above TP3 — hold.
+    assert (
+        check_exits(
+            t,
+            high=1.1,
+            low=1.0,
+            last=1.05,
+            atr=0.0,
+            settings=s,
+            underlying_high=722.0,
+            underlying_low=719.0,
+            underlying_last=721.0,
+            bar_hm=1300,
+        )
+        == []
+    )
+    # EOD flats full size.
+    actions = check_exits(
+        t,
+        high=1.2,
+        low=1.1,
+        last=1.15,
+        atr=0.0,
+        settings=s,
+        underlying_high=724.0,
+        underlying_low=723.0,
+        underlying_last=723.5,
+        bar_hm=1545,
+    )
+    assert len(actions) == 1
+    assert actions[0].reason == "eod"
 
 
 def test_exit_engine_oj_eod_flat():
