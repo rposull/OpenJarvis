@@ -1,0 +1,17 @@
+# Never commit secrets
+.env
+
+# Runtime output (keep authoritative OJ paper book tracked)
+data/*.json
+!data/live_ledger.json
+!data/live_session_snapshot.json
+!data/live_trade_ledger.json
+!data/live_session_state.json
+!data/order_source_stats.json
+logs/*.log
+logs/*.jsonl
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

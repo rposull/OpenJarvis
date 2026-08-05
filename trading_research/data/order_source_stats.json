@@ -1,0 +1,34 @@
+{
+  "closed_trades": 11,
+  "open_positions": 0,
+  "entry_sources": [
+    {
+      "source": "oj_0dte_pine",
+      "label": "OJ 0DTE Pine",
+      "count": 11,
+      "pct": 100.0
+    }
+  ],
+  "exit_channels": [
+    {
+      "source": "oj_0dte_pine",
+      "label": "OJ 0DTE Pine",
+      "count": 11,
+      "pct": 100.0
+    }
+  ],
+  "majority_entry": {
+    "source": "oj_0dte_pine",
+    "label": "OJ 0DTE Pine",
+    "count": 11,
+    "pct": 100.0
+  },
+  "majority_exit": {
+    "source": "oj_0dte_pine",
+    "label": "OJ 0DTE Pine",
+    "count": 11,
+    "pct": 100.0
+  },
+  "open_entry_sources": [],
+  "updated_at": 1785960547.5287802
+}

@@ -1,0 +1,54 @@
+{
+  "running": true,
+  "pid": 26824,
+  "started_at": 1785255314.613581,
+  "updated_at": 1785960547.5277808,
+  "starting_equity": 100000.0,
+  "equity": 102740.85,
+  "broker_equity": 102740.85,
+  "ledger_equity": 102740.85,
+  "ledger_pnl": 2740.85,
+  "return_pct": 2.740850000000006,
+  "open_positions": 0,
+  "open_detail": [],
+  "closed_trades": 11,
+  "session_pnl": 2740.85,
+  "kill_switch": false,
+  "note": "market refresh in progress",
+  "mode": "PAPER_ONLY",
+  "order_source_stats": {
+    "closed_trades": 11,
+    "open_positions": 0,
+    "entry_sources": [
+      {
+        "source": "oj_0dte_pine",
+        "label": "OJ 0DTE Pine",
+        "count": 11,
+        "pct": 100.0
+      }
+    ],
+    "exit_channels": [
+      {
+        "source": "oj_0dte_pine",
+        "label": "OJ 0DTE Pine",
+        "count": 11,
+        "pct": 100.0
+      }
+    ],
+    "majority_entry": {
+      "source": "oj_0dte_pine",
+      "label": "OJ 0DTE Pine",
+      "count": 11,
+      "pct": 100.0
+    },
+    "majority_exit": {
+      "source": "oj_0dte_pine",
+      "label": "OJ 0DTE Pine",
+      "count": 11,
+      "pct": 100.0
+    },
+    "open_entry_sources": [],
+    "updated_at": 1785960547.5287802
+  },
+  "order_flow_summary": "buys mostly OJ 0DTE Pine (100%) | sells mostly OJ 0DTE Pine (100%)"
+}
