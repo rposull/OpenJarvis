@@ -1,8 +1,8 @@
 {
   "running": true,
-  "pid": 26824,
+  "pid": 14884,
   "started_at": 1785255314.613581,
-  "updated_at": 1785960547.5277808,
+  "updated_at": 1786021857.5228112,
   "starting_equity": 100000.0,
   "equity": 102740.85,
   "broker_equity": 102740.85,
@@ -14,7 +14,7 @@
   "closed_trades": 11,
   "session_pnl": 2740.85,
   "kill_switch": false,
-  "note": "market refresh in progress",
+  "note": "",
   "mode": "PAPER_ONLY",
   "order_source_stats": {
     "closed_trades": 11,
@@ -48,7 +48,7 @@
       "pct": 100.0
     },
     "open_entry_sources": [],
-    "updated_at": 1785960547.5287802
+    "updated_at": 1786021857.5228112
   },
   "order_flow_summary": "buys mostly OJ 0DTE Pine (100%) | sells mostly OJ 0DTE Pine (100%)"
 }

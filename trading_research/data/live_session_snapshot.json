@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "saved_at": 1785960547.5307817,
+  "saved_at": 1786021857.5258238,
   "intentional_stop": false,
   "crash_reason": "",
   "started_at": 1785255314.613581,
@@ -24,7 +24,7 @@
     "max_drawdown": 0.00039469922904250717,
     "cooldown_ticks": 0,
     "hourly_trade_count": 0,
-    "bars_in_hour_window": 2,
+    "bars_in_hour_window": 6,
     "day": ""
   },
   "positions": [],
