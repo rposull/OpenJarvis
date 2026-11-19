@@ -621,10 +621,29 @@ export function SettingsPage() {
                 </span>
               </div>
             </SettingRow>
+            <SettingRow label="Voice replies (TTS)" description="Jarvis speaks responses using text_to_speech tool">
+              <button
+                onClick={() => { updateSettings({ voiceReplyEnabled: !settings.voiceReplyEnabled }); showSaved(); }}
+                className="relative w-11 h-6 rounded-full transition-colors cursor-pointer"
+                style={{
+                  background: settings.voiceReplyEnabled ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
+                }}
+              >
+                <span
+                  className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-white"
+                  style={{
+                    transform: settings.voiceReplyEnabled ? 'translateX(20px)' : 'translateX(0)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }}
+                />
+              </button>
+            </SettingRow>
+            <SettingRow label="TTS backend" description="Uses kokoro (local) via agent text_to_speech tool">
+              <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>kokoro (config)</span>
+            </SettingRow>
             {!speechBackendAvailable && speechBackendAvailable !== null && (
               <div className="text-xs mt-2 px-1" style={{ color: 'var(--color-text-tertiary)' }}>
-                Set up a speech backend to use voice input.
-                See the <a href="https://open-jarvis.github.io/OpenJarvis/user-guide/tools/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>documentation</a> for details.
+                Run: <code>powershell -File scripts\restore-jarvis.ps1</code> to install Whisper STT.
               </div>
             )}
           </Section>
@@ -672,7 +691,7 @@ export function SettingsPage() {
 
           {/* Updates */}
           <Section title="Updates">
-            <SettingRow label="Auto-update" description="Check for new desktop builds automatically every 30 minutes">
+            <SettingRow label="Auto-update" description="Off by default. GitHub updates replace your local customized app (Neural Vault, speech fixes) with stock OpenJarvis — leave off unless you want that.">
               <button
                 onClick={() => handleAutoUpdateToggle(!autoUpdateEnabled)}
                 className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"

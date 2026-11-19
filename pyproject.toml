@@ -84,6 +84,19 @@ server = [
     "pydantic>=2.0",
     "python-multipart>=0.0.9",
 ]
+# Desktop app boot runs: uv sync --extra desktop --group desktop-native (+ cloud extras).
+desktop = [
+    "fastapi>=0.110",
+    "uvicorn>=0.30",
+    "pydantic>=2.0",
+    "python-multipart>=0.0.9",
+    "faster-whisper>=1.0",
+    "av>=11,<19",
+    "onnxruntime<1.24; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "numpy>=1.24",
+    "sounddevice>=0.5",
+    "soundfile>=0.12",
+]
 openhands = ["openhands-sdk>=1.0; python_version >= '3.12'"]
 gpu-metrics = ["pynvml>=12.0"]
 energy-amd = ["amdsmi>=6.1"]
@@ -122,6 +135,11 @@ sandbox-wasm = ["wasmtime>=25"]
 sandbox-docker = ["docker>=7.0"]
 dashboard = ["textual>=0.80"]
 speech = ["faster-whisper>=1.0"]
+speech-tts = [
+    "kokoro>=0.9",
+    "soundfile>=0.12",
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+]
 speech-deepgram = ["deepgram-sdk>=3.0"]
 eval-wandb = ["wandb>=0.17"]
 eval-sheets = ["gspread>=6.0", "google-auth>=2.0"]
@@ -152,6 +170,12 @@ Issues = "https://github.com/open-jarvis/OpenJarvis/issues"
 
 [project.scripts]
 jarvis = "openjarvis.cli:main"
+
+[tool.uv.sources]
+openjarvis-rust = { path = "rust/crates/openjarvis-python" }
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/openjarvis"]
@@ -201,4 +225,7 @@ select = ["E", "F", "I", "W"]
 [dependency-groups]
 dev = [
     "maturin>=1.12.6",
+]
+desktop-native = [
+    "openjarvis-rust",
 ]

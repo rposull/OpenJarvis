@@ -1,0 +1,826 @@
+/* Cosmic deep-space theme — Trading page (flowy nebula + aurora aesthetic). */
+
+.edith-trading {
+  --edith-cyan: #5ce1ff;
+  --edith-violet: #b388ff;
+  --edith-magenta: #ff6ad5;
+  --edith-gold: #ffd166;
+  --edith-red: #ff6b8a;
+  --edith-cyan-dim: rgba(92, 225, 255, 0.55);
+  --edith-cyan-glow: rgba(92, 225, 255, 0.35);
+  --edith-violet-glow: rgba(179, 136, 255, 0.4);
+  --edith-magenta-glow: rgba(255, 106, 213, 0.28);
+  --edith-gold-glow: rgba(255, 209, 102, 0.32);
+  --edith-panel-bg: rgba(8, 6, 24, 0.72);
+  --edith-border: rgba(140, 120, 255, 0.28);
+  --edith-text: #eef6ff;
+  --edith-muted: rgba(180, 200, 240, 0.52);
+
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+  font-family: 'Share Tech Mono', var(--font-hud);
+  color: var(--edith-text);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, #1a0a3e 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 50%, #0d1f4a 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 0% 80%, #2d0a4a 0%, transparent 45%),
+    linear-gradient(180deg, #020010 0%, #050818 40%, #030612 100%);
+  min-height: 100%;
+}
+
+/* ── Animated cosmic layers ── */
+
+.edith-trading .cosmos-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.edith-trading .cosmos-nebula {
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 25%, rgba(120, 60, 255, 0.35), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 20%, rgba(0, 200, 255, 0.22), transparent 65%),
+    radial-gradient(ellipse 60% 50% at 70% 75%, rgba(255, 80, 180, 0.18), transparent 68%),
+    radial-gradient(ellipse 45% 35% at 25% 85%, rgba(60, 120, 255, 0.2), transparent 60%);
+  filter: blur(28px);
+  opacity: 0.85;
+  animation: cosmos-nebula-drift 22s ease-in-out infinite alternate;
+}
+
+.edith-trading .cosmos-aurora {
+  background:
+    linear-gradient(
+      125deg,
+      transparent 0%,
+      rgba(92, 225, 255, 0.06) 25%,
+      rgba(179, 136, 255, 0.12) 45%,
+      rgba(255, 106, 213, 0.08) 65%,
+      transparent 85%
+    );
+  background-size: 200% 200%;
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  animation: cosmos-aurora-flow 16s ease-in-out infinite;
+}
+
+.edith-trading .cosmos-stars {
+  background-image:
+    radial-gradient(1.2px 1.2px at 8% 12%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 22% 38%, rgba(200, 230, 255, 0.75), transparent),
+    radial-gradient(1.5px 1.5px at 35% 8%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1px 1px at 48% 62%, rgba(180, 220, 255, 0.6), transparent),
+    radial-gradient(1.2px 1.2px at 62% 22%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 78% 45%, rgba(220, 200, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 88% 15%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 12% 72%, rgba(200, 240, 255, 0.65), transparent),
+    radial-gradient(1.2px 1.2px at 28% 88%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1px 1px at 55% 92%, rgba(180, 200, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 72% 68%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 92% 82%, rgba(230, 210, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 42% 48%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 95% 55%, rgba(200, 230, 255, 0.6), transparent);
+  background-size: 100% 100%;
+  opacity: 0.9;
+  animation: cosmos-stars-twinkle 6s ease-in-out infinite alternate;
+}
+
+/* Center emitting fractal tree (crown + roots) */
+.edith-trading .cosmos-tree-system {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: min(72vw, 520px);
+  height: min(72vw, 520px);
+  transform: translate(-50%, -48%);
+  opacity: 0.7;
+  animation: cosmos-tree-system-drift 40s ease-in-out infinite alternate;
+}
+
+.edith-trading .cosmos-tree-system::before {
+  content: '';
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  width: 45%;
+  height: 35%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(92, 225, 255, 0.22) 0%,
+    rgba(179, 136, 255, 0.1) 35%,
+    transparent 70%
+  );
+  filter: blur(18px);
+  animation: cosmos-tree-emit-halo 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.edith-trading .cosmos-tree {
+  animation: cosmos-tree-emit 5s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes cosmos-tree-system-drift {
+  0% { transform: translate(-50%, -48%) rotate(-1.5deg) scale(1); }
+  100% { transform: translate(-50%, -46%) rotate(1.5deg) scale(1.02); }
+}
+
+@keyframes cosmos-tree-emit-halo {
+  0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(0.95); }
+  50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes cosmos-tree-emit {
+  0%, 100% { opacity: 0.78; }
+  50% { opacity: 1; }
+}
+
+.edith-trading .cosmos-tree-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.edith-trading .cosmos-tree-trunk {
+  fill: none;
+  stroke: url(#cosmos-trunk-grad);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 90;
+  stroke-dashoffset: 90;
+  animation: cosmos-tree-emit-flow 6s ease-in-out infinite;
+}
+
+.edith-trading .cosmos-tree-limb {
+  fill: none;
+  stroke: url(#cosmos-limb-grad);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: cosmos-tree-emit-flow 7s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+
+.edith-trading .cosmos-tree-limb-l { animation-delay: 0.7s; }
+.edith-trading .cosmos-tree-limb-r { animation-delay: 0.85s; }
+.edith-trading .cosmos-tree-limb-c { animation-delay: 0.55s; }
+
+.edith-trading .cosmos-tree-branch {
+  fill: none;
+  stroke: rgba(179, 136, 255, 0.55);
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  stroke-dasharray: 90;
+  stroke-dashoffset: 90;
+  animation: cosmos-tree-emit-flow 6.5s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+
+.edith-trading .cosmos-tree-twig {
+  fill: none;
+  stroke: rgba(92, 225, 255, 0.4);
+  stroke-linecap: round;
+  stroke-width: 0.9;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: cosmos-tree-emit-flow 5s ease-in-out infinite;
+  animation-delay: 1.8s;
+}
+
+.edith-trading .cosmos-tree-root-main {
+  stroke: url(#cosmos-trunk-grad);
+  stroke-width: 3;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: cosmos-tree-emit-flow 6s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.edith-trading .cosmos-tree-root {
+  fill: none;
+  stroke: rgba(92, 225, 255, 0.45);
+  stroke-linecap: round;
+  stroke-width: 1.8;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: cosmos-tree-emit-flow 7s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.edith-trading .cosmos-tree-root-fine {
+  fill: none;
+  stroke: rgba(255, 106, 213, 0.3);
+  stroke-linecap: round;
+  stroke-width: 0.75;
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: cosmos-tree-emit-flow 5.5s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.edith-trading .cosmos-tree-node {
+  fill: rgba(92, 225, 255, 0.7);
+  animation: cosmos-tree-node-emit 4s ease-in-out infinite;
+}
+
+.edith-trading .cosmos-tree-spark {
+  fill: rgba(255, 255, 255, 0.9);
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cosmos-tree-spark-emit 3s ease-in-out infinite;
+}
+
+
+@keyframes cosmos-nebula-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(3%, 2%) scale(1.04); }
+  66% { transform: translate(-2%, 4%) scale(0.98); }
+  100% { transform: translate(1%, -2%) scale(1.02); }
+}
+
+@keyframes cosmos-aurora-flow {
+  0%, 100% { background-position: 0% 50%; opacity: 0.55; }
+  50% { background-position: 100% 50%; opacity: 0.85; }
+}
+
+@keyframes cosmos-stars-twinkle {
+  0% { opacity: 0.65; }
+  100% { opacity: 1; }
+}
+
+@keyframes cosmos-tree-emit-flow {
+  0% {
+    stroke-dashoffset: 180;
+    opacity: 0.35;
+  }
+  40% {
+    stroke-dashoffset: 30;
+    opacity: 0.9;
+  }
+  70% {
+    stroke-dashoffset: 0;
+    opacity: 0.75;
+  }
+  100% {
+    stroke-dashoffset: -40;
+    opacity: 0.5;
+  }
+}
+
+@keyframes cosmos-tree-node-emit {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.95; }
+}
+
+@keyframes cosmos-tree-spark-emit {
+  0%, 100% { opacity: 0.2; transform: scale(0.6); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* Subtle star-dust mesh (replaces hex grid) */
+.edith-trading::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(140, 120, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 95% 85% at 50% 45%, black 15%, transparent 88%);
+  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 50% 45%, black 15%, transparent 88%);
+  opacity: 0.6;
+}
+
+.edith-trading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(92, 225, 255, 0.02) 50%,
+    transparent 100%
+  );
+  animation: cosmos-aurora-flow 20s ease-in-out infinite;
+}
+
+.edith-trading .edith-holo-panel {
+  border: 1px solid rgba(140, 120, 255, 0.35);
+  background: linear-gradient(135deg, rgba(92, 225, 255, 0.05) 0%, rgba(8, 6, 24, 0.88) 50%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 0 48px -8px var(--edith-violet-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.edith-trading .edith-scout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.edith-trading .edith-scout-card {
+  position: relative;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(140, 120, 255, 0.22);
+  background: rgba(4, 2, 18, 0.55);
+  border-radius: 8px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  transition: border-color 300ms ease, box-shadow 300ms ease, transform 300ms ease;
+}
+
+.edith-trading .edith-scout-card:hover {
+  border-color: rgba(92, 225, 255, 0.4);
+  box-shadow: 0 0 24px rgba(92, 225, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.edith-trading .edith-scout-card.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--edith-cyan), var(--edith-violet));
+  box-shadow: 0 0 16px var(--edith-cyan-glow);
+  animation: edith-scout-pulse 1.8s ease-in-out infinite;
+}
+
+.edith-trading .edith-scout-card.setup-hit {
+  border-color: rgba(255, 209, 102, 0.5);
+  box-shadow: 0 0 28px var(--edith-gold-glow);
+}
+
+.edith-trading .edith-scout-id {
+  font-family: 'Orbitron', var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--edith-cyan);
+  text-shadow: 0 0 16px var(--edith-cyan-glow);
+}
+
+.edith-trading .edith-scout-meta {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: var(--edith-muted);
+  margin-top: 0.25rem;
+}
+
+.edith-trading .edith-setup-row {
+  border-left: 2px solid transparent;
+  border-radius: 6px;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+}
+
+.edith-trading .edith-setup-row.edith-setup-alert {
+  border-left-color: var(--edith-gold);
+  animation: edith-setup-glow 2s ease-in-out infinite;
+}
+
+.edith-trading .edith-setup-confidence {
+  font-family: 'Orbitron', var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--edith-gold);
+  text-shadow: 0 0 12px var(--edith-gold-glow);
+}
+
+.edith-trading .edith-setup-confidence.high {
+  color: var(--edith-cyan);
+  text-shadow: 0 0 12px var(--edith-cyan-glow);
+}
+
+.edith-trading .edith-scout-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid rgba(255, 209, 102, 0.45);
+  color: var(--edith-gold);
+  border-radius: 999px;
+  animation: edith-scout-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes edith-scout-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes edith-setup-glow {
+  0%, 100% { box-shadow: inset 0 0 0 rgba(255, 209, 102, 0); }
+  50% { box-shadow: inset 0 0 32px rgba(255, 209, 102, 0.1); }
+}
+
+.edith-trading .edith-scan-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.edith-trading .edith-scan-wrap .jarvis-scan-line {
+  opacity: 0.55;
+  z-index: 2;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(179, 136, 255, 0.12),
+    rgba(92, 225, 255, 0.45),
+    rgba(255, 106, 213, 0.2),
+    rgba(92, 225, 255, 0.45),
+    rgba(179, 136, 255, 0.12),
+    transparent
+  );
+}
+
+.edith-trading h1.edith-value,
+.edith-trading h2.edith-value {
+  font-family: 'Orbitron', var(--font-display);
+  letter-spacing: 0.12em;
+}
+
+.edith-trading .edith-brand {
+  font-family: 'Orbitron', var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, var(--edith-cyan), var(--edith-violet), var(--edith-magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 12px var(--edith-violet-glow));
+}
+
+.edith-trading .edith-subtitle {
+  font-family: var(--font-hud);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--edith-muted);
+}
+
+.edith-trading .edith-panel {
+  position: relative;
+  background: var(--edith-panel-bg);
+  border: 1px solid var(--edith-border);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 8px 32px -8px rgba(0, 0, 0, 0.5),
+    0 0 40px -12px var(--edith-violet-glow);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
+
+.edith-trading .edith-panel::before,
+.edith-trading .edith-panel::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--edith-cyan-dim);
+  border-style: solid;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.edith-trading .edith-panel::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+  border-radius: 12px 0 0 0;
+}
+
+.edith-trading .edith-panel::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+  border-radius: 0 0 12px 0;
+}
+
+.edith-trading .edith-stat {
+  background: rgba(4, 2, 18, 0.45);
+  border: 1px solid rgba(140, 120, 255, 0.18);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+}
+
+.edith-trading .edith-pnl-hud {
+  border-color: rgba(92, 225, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 0 48px -4px var(--edith-cyan-glow),
+    0 0 80px -20px var(--edith-violet-glow);
+}
+
+.edith-trading .edith-stat-hero .edith-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--edith-cyan);
+  text-shadow: 0 0 18px var(--edith-cyan-glow);
+}
+
+.edith-trading .edith-market-pnl {
+  background: rgba(4, 2, 18, 0.4);
+  border: 1px solid rgba(140, 120, 255, 0.15);
+  border-radius: 8px;
+}
+
+.edith-trading .edith-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--edith-muted);
+}
+
+.edith-trading .edith-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--edith-text);
+}
+
+.edith-trading .edith-win {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--edith-cyan);
+  text-shadow: 0 0 12px var(--edith-cyan-glow);
+}
+
+.edith-trading .edith-win-low {
+  color: var(--edith-gold);
+  text-shadow: 0 0 10px var(--edith-gold-glow);
+}
+
+.edith-trading .edith-chip {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  border: 1px solid rgba(140, 120, 255, 0.25);
+  background: rgba(4, 2, 18, 0.5);
+  color: var(--edith-muted);
+  transition: border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.edith-trading .edith-chip:hover {
+  border-color: rgba(92, 225, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.edith-trading .edith-chip-active {
+  border-color: var(--edith-cyan);
+  color: var(--edith-cyan);
+  box-shadow: 0 0 20px var(--edith-cyan-glow);
+  background: rgba(92, 225, 255, 0.08);
+}
+
+.edith-trading .edith-row {
+  border: 1px solid rgba(140, 120, 255, 0.14);
+  background: rgba(4, 2, 18, 0.4);
+  border-radius: 8px;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.edith-trading .edith-row:hover,
+.edith-trading .edith-row-active {
+  border-color: rgba(92, 225, 255, 0.35);
+  background: rgba(92, 225, 255, 0.06);
+  box-shadow: 0 0 20px rgba(92, 225, 255, 0.08);
+}
+
+.edith-trading .edith-btn-buy,
+.edith-trading .edith-btn-sell {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: box-shadow 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.edith-trading .edith-btn-buy {
+  color: var(--edith-cyan);
+  border-color: rgba(92, 225, 255, 0.45);
+  background: rgba(92, 225, 255, 0.1);
+}
+
+.edith-trading .edith-btn-buy:hover:not(:disabled) {
+  box-shadow: 0 0 20px var(--edith-cyan-glow);
+  transform: translateY(-1px);
+}
+
+.edith-trading .edith-btn-sell {
+  color: #ff9ab0;
+  border-color: rgba(255, 107, 138, 0.4);
+  background: rgba(255, 80, 120, 0.1);
+}
+
+.edith-trading .edith-btn-sell:hover:not(:disabled) {
+  box-shadow: 0 0 16px rgba(255, 107, 138, 0.25);
+  transform: translateY(-1px);
+}
+
+.edith-trading .edith-btn-buy:disabled,
+.edith-trading .edith-btn-sell:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.edith-trading .edith-feedback {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  border-radius: 8px;
+  border: 1px solid rgba(92, 225, 255, 0.28);
+  background: rgba(92, 225, 255, 0.08);
+  color: var(--edith-cyan);
+  backdrop-filter: blur(8px);
+}
+
+.edith-trading .edith-feedback-error {
+  border-color: rgba(255, 107, 138, 0.35);
+  background: rgba(255, 80, 120, 0.1);
+  color: #ff9ab0;
+}
+
+.edith-trading .edith-refresh {
+  border: 1px solid var(--edith-border);
+  background: rgba(4, 2, 18, 0.55);
+  color: var(--edith-muted);
+  border-radius: 8px;
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(8px);
+  transition: color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.edith-trading .edith-refresh:hover:not(:disabled) {
+  color: var(--edith-cyan);
+  border-color: var(--edith-cyan-dim);
+  box-shadow: 0 0 20px var(--edith-cyan-glow);
+}
+
+.edith-trading .edith-chart-panel {
+  min-height: 640px;
+}
+
+.edith-trading .edith-tv-chart-wrap {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.edith-trading .edith-tv-chart-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(4, 2, 18, 0.88);
+  color: var(--edith-cyan);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.edith-trading .edith-tv-chart-overlay-error {
+  color: #ff9ab0;
+}
+
+.edith-trading .edith-tv-chart-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(140, 120, 255, 0.25);
+  border-top-color: var(--edith-cyan);
+  border-right-color: var(--edith-violet);
+  border-radius: 50%;
+  animation: edith-tv-spin 0.8s linear infinite;
+}
+
+@keyframes edith-tv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.edith-trading .edith-symbol-search {
+  border: 1px solid rgba(140, 120, 255, 0.22);
+  background: rgba(4, 2, 18, 0.5);
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  backdrop-filter: blur(8px);
+}
+
+.edith-trading .edith-symbol-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--edith-text);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.edith-trading .edith-symbol-input::placeholder {
+  color: var(--edith-muted);
+}
+
+.edith-trading .edith-muted-icon {
+  color: var(--edith-muted);
+  flex-shrink: 0;
+}
+
+.edith-trading .edith-external-link {
+  border: 1px solid rgba(92, 225, 255, 0.3);
+  color: var(--edith-cyan);
+  border-radius: 8px;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  transition: box-shadow 160ms ease;
+}
+
+.edith-trading .edith-external-link:hover {
+  box-shadow: 0 0 20px var(--edith-cyan-glow);
+}
+
+.edith-trading .edith-automation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(140, 120, 255, 0.2);
+  border-radius: 999px;
+  color: var(--edith-muted);
+  letter-spacing: 0.06em;
+  background: rgba(4, 2, 18, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.edith-trading .edith-automation-badge.active {
+  border-color: rgba(92, 225, 255, 0.45);
+  color: var(--edith-cyan);
+  box-shadow: 0 0 16px rgba(92, 225, 255, 0.15);
+}
+
+.edith-trading .edith-alert-status-ok {
+  color: var(--edith-cyan);
+}
+
+.edith-trading .edith-alert-status-queued {
+  color: var(--edith-gold);
+}
+
+.edith-trading .edith-alert-status-error {
+  color: #ff9ab0;
+}
+
+.edith-trading .edith-alert-status-pending {
+  color: var(--edith-muted);
+}
+
+.edith-trading .edith-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  color: var(--edith-cyan-dim);
+  word-break: break-all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edith-trading .cosmos-nebula,
+  .edith-trading .cosmos-aurora,
+  .edith-trading .cosmos-stars,
+  .edith-trading .cosmos-tree-system,
+  .edith-trading .cosmos-tree,
+  .edith-trading .cosmos-tree-system::before,
+  .edith-trading .cosmos-tree-twig,
+  .edith-trading .cosmos-tree-node,
+  .edith-trading .cosmos-tree-spark,
+  .edith-trading::after,
+  .edith-trading .edith-scan-wrap .jarvis-scan-line {
+    animation: none !important;
+  }
+
+  .edith-trading .cosmos-tree-trunk,
+  .edith-trading .cosmos-tree-limb,
+  .edith-trading .cosmos-tree-branch,
+  .edith-trading .cosmos-tree-root {
+    stroke-dashoffset: 0;
+  }
+}

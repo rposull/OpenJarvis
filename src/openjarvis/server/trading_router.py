@@ -628,6 +628,41 @@ async def alpaca_status() -> Dict[str, Any]:
     return _alpaca_status()
 
 
+@router.get("/prop-firm-eval")
+async def prop_firm_eval() -> Dict[str, Any]:
+    """Latest Monte Carlo prop-firm eval summary (MNQ / eval practice desk)."""
+    cfg: Dict[str, Any] = {}
+    try:
+        from trading_research.config.market_strategy import read_prop_firm_toml
+
+        cfg = read_prop_firm_toml()
+    except Exception as exc:
+        cfg = {"enabled": False, "error": str(exc)}
+
+    # trading_router lives at src/openjarvis/server/ → repo root is parents[3]
+    eval_path = Path(__file__).resolve().parents[3] / "trading_research" / "data" / "prop_firm_eval.json"
+    payload: Dict[str, Any] | None = None
+    if eval_path.is_file():
+        try:
+            payload = json.loads(eval_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return {
+                "ok": False,
+                "config": cfg,
+                "path": str(eval_path),
+                "error": f"Failed to read eval JSON: {exc}",
+            }
+
+    return {
+        "ok": payload is not None,
+        "config": cfg,
+        "path": str(eval_path),
+        "eval": payload,
+        "symbol_focus": "MNQ",
+        "mode": "eval_practice",
+    }
+
+
 @router.get("/alpaca/quote/{symbol}")
 async def alpaca_quote(symbol: str) -> Dict[str, Any]:
     """Latest Alpaca trade price for a US equity ticker."""
@@ -2053,46 +2088,99 @@ async def execute_tradingview_alert(body: ExecuteAlertRequest) -> Dict[str, Any]
 
 
 @router.post("/webhook/tradingview")
-
 async def tradingview_webhook(request: Request) -> Dict[str, Any]:
-
     """Receive TradingView alert webhooks and optionally auto-execute paper trades."""
-
     expected = _tradingview_webhook_secret()
-
     if expected:
-
         provided = (
-
             request.query_params.get("secret")
-
             or request.query_params.get("token")
-
             or request.headers.get("x-webhook-secret")
-
             or request.headers.get("x-tradingview-secret")
-
         )
-
+        # TV sometimes puts secret in JSON body when webhook URL omits query string.
+        if not provided:
+            try:
+                peek = await request.json()
+                if isinstance(peek, dict):
+                    provided = peek.get("secret") or peek.get("token")
+                    request.state.tv_body = peek
+                else:
+                    request.state.tv_body = peek
+            except Exception:
+                try:
+                    request.state.tv_raw = (await request.body()).decode("utf-8", errors="replace")
+                except Exception:
+                    request.state.tv_raw = ""
+                request.state.tv_body = None
         if provided != expected:
-
+            try:
+                reject_path = _trading_data_dir() / "tradingview_webhook_rejects.jsonl"
+                reject_path.parent.mkdir(parents=True, exist_ok=True)
+                with reject_path.open("a", encoding="utf-8") as fh:
+                    fh.write(
+                        json.dumps(
+                            {
+                                "ts": time.time(),
+                                "reason": "invalid_or_missing_secret",
+                                "has_query_secret": bool(request.query_params.get("secret")),
+                                "path": str(request.url.path),
+                                "client": request.client.host if request.client else None,
+                            }
+                        )
+                        + "\n"
+                    )
+            except Exception:
+                pass
             raise HTTPException(status_code=401, detail="invalid or missing webhook secret")
 
-
-
     body: Dict[str, Any]
-
-    try:
-
-        body = await request.json()
-
-    except Exception:
-
-        raw = (await request.body()).decode("utf-8", errors="replace")
-
-        body = {"message": raw}
-
-
+    cached = getattr(request.state, "tv_body", None)
+    if isinstance(cached, dict):
+        body = cached
+    elif isinstance(cached, str):
+        body = {"message": cached}
+        if cached.strip().startswith("{"):
+            try:
+                obj = json.loads(cached)
+                if isinstance(obj, dict):
+                    body = obj
+            except Exception:
+                pass
+    else:
+        raw_cached = getattr(request.state, "tv_raw", None)
+        if isinstance(raw_cached, str) and raw_cached:
+            body = {"message": raw_cached}
+            if raw_cached.strip().startswith("{"):
+                try:
+                    obj = json.loads(raw_cached)
+                    if isinstance(obj, dict):
+                        body = obj
+                except Exception:
+                    pass
+        else:
+            try:
+                raw_json = await request.json()
+                if isinstance(raw_json, dict):
+                    body = raw_json
+                elif isinstance(raw_json, str):
+                    try:
+                        parsed_root = json.loads(raw_json)
+                        body = parsed_root if isinstance(parsed_root, dict) else {"message": raw_json}
+                    except Exception:
+                        body = {"message": raw_json}
+                else:
+                    body = {"message": str(raw_json)}
+            except Exception:
+                raw = (await request.body()).decode("utf-8", errors="replace").strip()
+                body = {"message": raw}
+                if raw.startswith("{"):
+                    try:
+                        obj = json.loads(raw)
+                        if isinstance(obj, dict):
+                            body = obj
+                    except Exception:
+                        pass
 
     parsed = parse_alert_payload(body)
     ai_result = evaluate_dual_ai_decision(parsed)
@@ -2105,128 +2193,74 @@ async def tradingview_webhook(request: Request) -> Dict[str, Any]:
         final_action = ai_result.get("final_action")
         if final_action:
             parsed["action"] = final_action
+    else:
+        entry_ai = {}
 
     tv_symbol = parsed.get("tradingview_symbol") or ""
-
     if not tv_symbol:
-
         symbol = body.get("symbol") or body.get("ticker") or ""
-
         if symbol:
-
             if ":" in str(symbol):
-
                 tv_symbol = str(symbol).upper()
-
             else:
-
                 tv_symbol = to_tradingview(str(symbol), default_exchange=_tradingview_exchange())
-
             parsed["tradingview_symbol"] = tv_symbol
-
             if not parsed.get("internal_symbol"):
-
                 internal = from_tradingview(tv_symbol, default_exchange=_tradingview_exchange())
-
                 parsed["internal_symbol"] = internal["symbol"]
-
                 parsed["market"] = internal["market"]
 
-
-
     entry: Dict[str, Any] = {
-
         "received_at": time.time(),
-
         "tradingview_symbol": tv_symbol,
-
         "internal_symbol": parsed.get("internal_symbol"),
-
         "market": parsed.get("market"),
-
         "action": parsed.get("action"),
-
         "direction": parsed.get("direction"),
-
         "strategy": parsed.get("strategy"),
-
         "event": parsed.get("event"),
-
         "price": parsed.get("price"),
-
         "message": parsed.get("message"),
-
         "alert_name": parsed.get("alert_name"),
-
         "payload": body,
-
         "trade_status": "received",
-
     }
-    if ai_result.get("enabled"):
+    if entry_ai:
         entry.update(entry_ai)
 
-
-
     tv_cfg = load_tradingview_config()
-
     order_result: Optional[Dict[str, Any]] = None
-
     if ai_result.get("enabled") and ai_result.get("status") != "approved":
         entry["trade_status"] = "ai_blocked"
     elif tv_cfg.get("auto_execute") and parsed.get("action"):
-
         order_result = execute_alert_paper_trade(parsed)
-
         entry["order_result"] = order_result
-
         entry["trade_status"] = order_result.get("status") or (
-
             "executed" if order_result.get("ok") else "rejected"
-
         )
-
     elif not parsed.get("action"):
-
         entry["trade_status"] = "no_action"
 
-
-
     _TV_ALERTS.insert(0, entry)
-
     del _TV_ALERTS[_TV_ALERTS_MAX:]
-
     _persist_tv_alerts()
 
-
-
     logger.info(
-
-        "TradingView alert: %s action=%s status=%s",
-
+        "TradingView alert: %s action=%s event=%s status=%s",
         tv_symbol,
-
         parsed.get("action"),
-
+        parsed.get("event"),
         entry.get("trade_status"),
-
     )
-
     return {
-
         "ok": True,
-
         "tradingview_symbol": tv_symbol,
-
         "internal_symbol": parsed.get("internal_symbol"),
-
         "action": parsed.get("action"),
-
+        "event": parsed.get("event"),
         "trade_status": entry.get("trade_status"),
         "ai": ai_result,
-
         "order": order_result,
-
     }
 
 

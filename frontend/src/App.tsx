@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Routes, Route } from 'react-router';
+import { Navigate, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout';
 import { ChatPage } from './pages/ChatPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -8,6 +8,14 @@ import { GetStartedPage } from './pages/GetStartedPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { DataSourcesPage } from './pages/DataSourcesPage';
 import { LogsPage } from './pages/LogsPage';
+import { TradingPage } from './pages/TradingPage';
+import { FreqtradePage } from './pages/FreqtradePage';
+import { NautilusPage } from './pages/NautilusPage';
+import { HedgeFundPage } from './pages/HedgeFundPage';
+import { SetupScannerPage } from './pages/SetupScannerPage';
+import { TradingViewPage } from './pages/TradingViewPage';
+import { NeuralVaultPage } from './pages/NeuralVaultPage';
+import { MnqEvalPage } from './pages/MnqEvalPage';
 import { CommandPalette } from './components/CommandPalette';
 import { SetupScreen } from './components/SetupScreen';
 import { Toaster } from './components/ui/sonner';
@@ -184,14 +192,24 @@ export default function App() {
     <>
       <UpdateChecker />
       <Routes>
+        <Route path="tradingview" element={<TradingViewPage />} />
         <Route element={<Layout />}>
-          <Route index element={<ChatPage />} />
+          <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="chat" element={<ChatPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="get-started" element={<GetStartedPage />} />
           <Route path="data-sources" element={<DataSourcesPage />} />
           <Route path="agents" element={<AgentsPage />} />
           <Route path="logs" element={<LogsPage />} />
+          <Route path="trading" element={<TradingPage />} />
+          <Route path="mnq-eval" element={<MnqEvalPage />} />
+          <Route path="freqtrade" element={<FreqtradePage />} />
+          <Route path="nautilus" element={<NautilusPage />} />
+          <Route path="hedge-fund" element={<HedgeFundPage />} />
+          <Route path="vault" element={<NeuralVaultPage />} />
+          <Route path="obsidian" element={<Navigate to="/vault" replace />} />
+          <Route path="setup-scanner" element={<SetupScannerPage />} />
         </Route>
       </Routes>
       <Toaster position="bottom-right" />

@@ -8,6 +8,8 @@ use tokio::sync::Mutex;
 
 const OLLAMA_PORT: u16 = 11434;
 const JARVIS_PORT: u16 = 8000;
+const DESKTOP_UV_SYNC_COMMAND: &str =
+    "uv sync --extra desktop --extra inference-cloud --extra inference-google --group desktop-native";
 
 /// Small, fast model pulled at startup so the app opens quickly.
 const STARTUP_MODEL: &str = "qwen3.5:4b";
@@ -682,10 +684,11 @@ fn format_uv_sync_failure(
     format!(
         "`uv sync` failed in {} (exit {}). Last output:\n\n{}\n\n\
          Try opening a terminal in that directory and running \
-         `uv sync --extra server` manually for the full output.",
+         `{}` manually for the full output.",
         root.display(),
         code,
         uv_sync_stderr_tail(stderr, 800),
+        DESKTOP_UV_SYNC_COMMAND,
     )
 }
 
@@ -1143,9 +1146,14 @@ async fn boot_backend(backend: SharedBackend, status: SharedStatus) {
     sync_cmd
         .args([
             "sync",
-            "--extra", "server",
-            "--extra", "inference-cloud",
-            "--extra", "inference-google",
+            "--extra",
+            "desktop",
+            "--extra",
+            "inference-cloud",
+            "--extra",
+            "inference-google",
+            "--group",
+            "desktop-native",
         ])
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::piped())
@@ -2486,7 +2494,7 @@ mod tests {
         assert!(msg.contains("exit 2"));
         assert!(msg.contains("/home/u/.openjarvis/src"));
         assert!(msg.contains("failed to resolve numpy==2.1.3"));
-        assert!(msg.contains("uv sync --extra server")); // actionable next step
+        assert!(msg.contains(DESKTOP_UV_SYNC_COMMAND)); // actionable next step
     }
 
     #[test]

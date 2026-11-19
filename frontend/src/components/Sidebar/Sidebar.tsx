@@ -9,14 +9,16 @@ import {
   PanelLeftClose,
   PanelLeft,
   Cpu,
-  Rocket,
-  Bot,
   Sun,
   Moon,
   Monitor,
   Loader2,
   ScrollText,
-  Database,
+  TrendingUp,
+  ScanSearch,
+  Orbit,
+  Tv,
+  Crosshair,
 } from 'lucide-react';
 import { ConversationList } from './ConversationList';
 import { useAppStore } from '../../lib/store';
@@ -45,21 +47,23 @@ export function Sidebar() {
   const handleNewChat = () => {
     // Don't create a new chat if the current one is empty
     if (messages.length === 0) {
-      navigate('/');
+      navigate('/chat');
       return;
     }
     createConversation(selectedModel);
-    navigate('/');
+    navigate('/chat');
   };
 
   const navItems = [
-    { path: '/', icon: MessageSquare, label: 'Chat' },
-    { path: '/dashboard', icon: BarChart3, label: 'Dashboard' },
-    { path: '/data-sources', icon: Database, label: 'Data Sources' },
-    { path: '/agents', icon: Bot, label: 'Agents' },
+    { path: '/', icon: BarChart3, label: 'Alpaca Dash' },
+    { path: '/chat', icon: MessageSquare, label: 'Chat' },
+    { path: '/mnq-eval', icon: Crosshair, label: 'MNQ Eval' },
+    { path: '/trading', icon: TrendingUp, label: 'Alpaca Paper' },
+    { path: '/setup-scanner', icon: ScanSearch, label: 'Setup Scanner' },
+    { path: '/tradingview', icon: Tv, label: 'TradingView' },
+    { path: '/vault', icon: Orbit, label: 'Neural Vault' },
     { path: '/logs', icon: ScrollText, label: 'Logs' },
     { path: '/settings', icon: Settings, label: 'Settings' },
-    { path: '/get-started', icon: Rocket, label: 'Get Started' },
   ];
 
   return (
@@ -194,7 +198,10 @@ export function Sidebar() {
           {/* Bottom nav */}
           <nav className="px-2 pb-3 pt-2 flex flex-col gap-0.5" style={{ borderTop: '1px solid var(--color-border)' }}>
             {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive =
+                item.path === '/'
+                  ? location.pathname === '/' || location.pathname === '/dashboard'
+                  : location.pathname === item.path;
               return (
                 <button
                   key={item.path}

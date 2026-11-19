@@ -1,0 +1,214 @@
+/* Neural Vault — local AI memory & knowledge console */
+
+.vault-page {
+  --vault-bg: #03040a;
+  --vault-surface: rgba(8, 12, 28, 0.82);
+  --vault-border: rgba(92, 225, 255, 0.18);
+  --vault-violet: #9d7cff;
+  --vault-cyan: #5ce1ff;
+  --vault-magenta: #e056fd;
+  --vault-ink: #e8f4ff;
+  --vault-muted: rgba(168, 196, 220, 0.55);
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+  color: var(--vault-ink);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(92, 225, 255, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 60%, rgba(157, 124, 255, 0.14) 0%, transparent 50%),
+    linear-gradient(180deg, #020308 0%, #06091a 45%, #03040a 100%);
+}
+
+.vault-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(92, 225, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(92, 225, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 20%, transparent 75%);
+}
+
+.vault-scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.4;
+}
+
+.vault-scanline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(92, 225, 255, 0.45), transparent);
+  animation: vault-sweep 9s linear infinite;
+}
+
+@keyframes vault-sweep {
+  0% { top: -4px; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-scanline::after {
+    animation: none;
+    opacity: 0.15;
+    top: 40%;
+  }
+}
+
+.vault-display {
+  font-family: Orbitron, 'Chakra Petch', system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vault-panel {
+  background: var(--vault-surface);
+  border: 1px solid var(--vault-border);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 0 0 1px rgba(157, 124, 255, 0.06) inset,
+    0 24px 48px -32px rgba(0, 0, 0, 0.65);
+}
+
+.vault-hero {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(157, 124, 255, 0.28);
+  background: linear-gradient(125deg, rgba(16, 24, 48, 0.95), rgba(4, 6, 14, 0.98));
+  min-height: 148px;
+}
+
+.vault-hero-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  right: -40px;
+  top: -80px;
+  background: radial-gradient(circle, rgba(92, 225, 255, 0.22), transparent 68%);
+  filter: blur(2px);
+  animation: vault-pulse 6s ease-in-out infinite;
+}
+
+@keyframes vault-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-hero-glow {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+.vault-metric {
+  font-variant-numeric: tabular-nums;
+}
+
+.vault-metric-value {
+  font-family: Orbitron, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--vault-cyan);
+  text-shadow: 0 0 24px rgba(92, 225, 255, 0.35);
+}
+
+.vault-search {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(92, 225, 255, 0.28);
+  background: rgba(2, 6, 16, 0.85);
+  color: var(--vault-ink);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.vault-search:focus {
+  border-color: rgba(92, 225, 255, 0.65);
+  box-shadow: 0 0 0 3px rgba(92, 225, 255, 0.12), 0 0 32px rgba(92, 225, 255, 0.08);
+}
+
+.vault-search::placeholder {
+  color: rgba(168, 196, 220, 0.45);
+}
+
+.vault-shard {
+  position: relative;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(157, 124, 255, 0.22);
+  background: linear-gradient(160deg, rgba(12, 18, 36, 0.9), rgba(4, 6, 12, 0.95));
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.vault-shard:hover {
+  border-color: rgba(92, 225, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.vault-score-bar {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.vault-score-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--vault-violet), var(--vault-cyan));
+}
+
+.vault-graph-frame {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(157, 124, 255, 0.2);
+  background: rgba(2, 4, 12, 0.6);
+}
+
+.vault-graph-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.vault-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid rgba(92, 225, 255, 0.25);
+  color: var(--vault-cyan);
+  background: rgba(92, 225, 255, 0.06);
+}
+
+.vault-note-row {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.vault-note-row:hover {
+  background: rgba(92, 225, 255, 0.04);
+  border-color: rgba(92, 225, 255, 0.12);
+}

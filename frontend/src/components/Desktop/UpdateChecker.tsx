@@ -7,19 +7,19 @@ const DISABLED_KEY = 'oj-auto-update-disabled';
 
 export function isAutoUpdateDisabled(): boolean {
   try {
-    return localStorage.getItem(DISABLED_KEY) === '1';
+    const v = localStorage.getItem(DISABLED_KEY);
+    // Opt-in only. Missing key = disabled. GitHub `desktop-latest` updates
+    // replace a customized local build with stock upstream (UI + sync extras).
+    if (v === '0') return false;
+    return true;
   } catch {
-    return false;
+    return true;
   }
 }
 
 export function setAutoUpdateDisabled(disabled: boolean): void {
   try {
-    if (disabled) {
-      localStorage.setItem(DISABLED_KEY, '1');
-    } else {
-      localStorage.removeItem(DISABLED_KEY);
-    }
+    localStorage.setItem(DISABLED_KEY, disabled ? '1' : '0');
   } catch {}
 }
 
